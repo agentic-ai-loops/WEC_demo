@@ -1,0 +1,9 @@
+# This is a demonstration build of the Whitby Eye Care site, published so the
+# clinic can review it. It is NOT the clinic's live website, and some facts on it
+# — the opening hours in particular — are still unconfirmed.
+#
+# Search engines are asked not to index it, so that a patient searching for the
+# clinic cannot land here and read hours that turn out to be wrong. Remove this
+# file when the facts are confirmed and this becomes the real site.
+User-agent: *
+Disallow: /
