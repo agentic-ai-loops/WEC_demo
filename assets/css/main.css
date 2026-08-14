@@ -501,7 +501,7 @@ img.brand-mark {
 
 .card-grid {
   display: grid;
-  gap: 1.75rem;
+  gap: 2rem;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
 }
 
