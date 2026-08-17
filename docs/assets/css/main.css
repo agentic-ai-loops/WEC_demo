@@ -100,20 +100,47 @@ li { list-style: none; }
 
 /* Visible only while focused; fixed so it still lands on screen when the
    page has been scrolled. */
+/* The skip link is hidden until focused, but it is NOT parked outside the
+   viewport to do it.
+
+   It used to sit at `top: -6rem` — 96px above the layout viewport — and move to
+   `top: 0.75rem` on focus. That is the old skip-link idiom and it is a real
+   defect, not a false positive: a required control whose box is outside the
+   viewport is unreachable by anything that works from geometry rather than from
+   the focus order — pointer and touch users, zoom and magnification, and the
+   layout audit that reported it at every width (`docs/HANDOFF.md` §5.1).
+
+   Visually hidden *in place* instead: the box stays at its focused position and
+   is clipped to a point until focus restores it. Keyboard reachability — the
+   whole purpose of a skip link — is unchanged, because clipping never removed an
+   element from the focus order, and `display: none` or `visibility: hidden`
+   would have. Nothing here hides the element from the audit; it moves it inside
+   the viewport, which is what the finding asked for. */
 .skip-link {
   position: fixed;
   left: 0.75rem;
-  top: -6rem;
+  top: 0.75rem;
   z-index: 100;
-  padding: 0.75rem 1.125rem;
   background: var(--surface-deep);
   color: #fff;
   font-weight: 600;
   text-decoration: none;
   border-radius: var(--radius-sm);
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.skip-link:focus { top: 0.75rem; }
+.skip-link:focus {
+  width: auto;
+  height: auto;
+  padding: 0.75rem 1.125rem;
+  overflow: visible;
+  clip-path: none;
+}
 
 /* Available to assistive technology, not shown on screen. Used to give
    otherwise-identical "Learn more" links a distinguishable accessible name. */

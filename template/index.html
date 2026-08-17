@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+{#
+  Meridian, bound to the customer digest. Every visible string comes from
+  digest.xml: nothing here is hardcoded copy about the business, so a digest
+  edit is the only thing needed to change the site.
+
+  Slots the digest cannot fill are removed rather than filled, and every
+  region is guarded by exactly the data it displays, so an empty collection
+  renders nothing at all - no heading, no wrapper, no divider.
+#}
+{% set book = digest.cta('book-appointment') %}
+{% set call = digest.cta('call-clinic') %}
+{% set address = digest.location.address %}
+{% macro brand(extra_class='') %}
+    <a class="brand{% if extra_class %} {{ extra_class }}{% endif %}" href="index.html">
+      {% if digest.brand.logo %}
+      <img class="brand-mark" src="{{ digest.brand.logo.path }}" alt="{{ digest.brand.logo.alt }}">
+      {% else %}
+      <span class="brand-mark" aria-hidden="true"></span>
+      {% endif %}
+      <span class="brand-text">
+        <span class="brand-name">{{ digest.business.name }}</span>
+        {% if digest.business.category %}
+        <span class="brand-kicker">{{ digest.business.category }}</span>
+        {% endif %}
+      </span>
+    </a>
+{% endmacro %}
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ digest.business.name }}{% if digest.business.category %} &mdash; {{ digest.business.category }}{% endif %}</title>
+{% if digest.business.tagline %}
+<meta name="description" content="{{ digest.business.tagline }}">
+{% endif %}
+{% if digest.brand.favicon %}
+<link rel="icon" href="{{ digest.brand.favicon.path }}">
+{% endif %}
+<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+{{ brand() }}
+
+    <nav class="site-nav" aria-label="Primary">
+      <ul class="nav-list">
+        {% if digest.services %}
+        <li><a href="#services">Services</a></li>
+        {% endif %}
+        {% if digest.products.categories %}
+        <li><a href="#products">Products</a></li>
+        {% endif %}
+        {% if digest.business.description or digest.trust %}
+        <li><a href="#about">About</a></li>
+        {% endif %}
+        {% if digest.team %}
+        <li><a href="#team">Our Team</a></li>
+        {% endif %}
+        {% if digest.faqs %}
+        <li><a href="#faq">FAQ</a></li>
+        {% endif %}
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+
+    {% if book %}
+    <a class="btn btn-primary header-cta" href="{{ book.href }}">{{ book.label }}</a>
+    {% endif %}
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" data-digest-section="hero">
+    <div class="wrap hero-inner">
+      <div class="hero-copy">
+        <h1>{{ digest.business.name }}</h1>
+        {% if digest.business.tagline %}
+        <p class="lead" data-digest-field="business.tagline">{{ digest.business.tagline }}</p>
+        {% endif %}
+        {% if book or call %}
+        <p class="hero-actions">
+          {% if book %}
+          <a class="btn btn-primary btn-lg" href="{{ book.href }}">{{ book.label }}</a>
+          {% endif %}
+          {% if call %}
+          <a class="btn btn-ghost btn-lg" href="{{ call.href }}">{{ call.label }}</a>
+          {% endif %}
+        </p>
+        {% endif %}
+      </div>
+
+      {# The eye illustration is drawn entirely in CSS. It stays: the customer's
+         own hero image is licensed stock photography of people who do not work
+         here, and a real clinic does not present strangers as its patients. #}
+      <div class="hero-visual" aria-hidden="true">
+        <span class="lens"></span>
+        <span class="iris"></span>
+        <span class="ring"></span>
+      </div>
+    </div>
+
+    {# Exactly the union of the three items below: the strip is a bordered box,
+       so it must not survive as an empty frame when none of them exist. #}
+    {% if address.street or digest.contact.phone or digest.contact.email %}
+    <div class="wrap">
+      <ul class="info-strip">
+        {% if address.street %}
+        <li class="info-item">
+          <span class="info-label">Location</span>
+          <span class="info-value">{{ address.street }}{% if address.city %}, {{ address.city }}{% endif %}</span>
+        </li>
+        {% endif %}
+        {% if digest.contact.phone %}
+        <li class="info-item">
+          <span class="info-label">Phone</span>
+          <span class="info-value"><a href="tel:{{ digest.contact.phone }}">{{ digest.contact.phone }}</a></span>
+        </li>
+        {% endif %}
+        {% if digest.contact.email %}
+        <li class="info-item">
+          <span class="info-label">Email</span>
+          <span class="info-value"><a href="mailto:{{ digest.contact.email }}">{{ digest.contact.email }}</a></span>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+    {% endif %}
+  </section>
+
+  {% if digest.services %}
+  <!-- ============ SERVICES (one card per digest service) ============ -->
+  <section class="section" id="services" data-digest-section="services">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow">Our Services</p>
+        <h2>What we offer</h2>
+      </header>
+
+      <ul class="card-grid">
+        {% for service in digest.services %}
+        <li class="card"
+            data-digest-item="service:{{ service.id }}"
+            data-template-block="service-card">
+          <span class="card-mark" aria-hidden="true"></span>
+          {% if service.category %}
+          <p class="eyebrow">{{ service.category }}</p>
+          {% endif %}
+          <h3 class="card-title">{{ service.name }}</h3>
+          {% if service.blurb %}
+          <p class="card-text">{{ service.blurb }}</p>
+          {% endif %}
+          {% if service.audience %}
+          <p class="card-meta">{{ service.audience }}</p>
+          {% endif %}
+          {% if service.price %}
+          <p class="card-meta">{{ service.price }}</p>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if digest.business.description or digest.trust %}
+  <!-- ============ ABOUT ============ -->
+  <section class="section section-alt" id="about" data-digest-section="about">
+    <div class="wrap split">
+      <div class="split-copy">
+        <p class="eyebrow">About Us</p>
+        <h2>Why choose us</h2>
+        {% if digest.business.description %}
+        <p data-digest-field="business.description">{{ digest.business.description }}</p>
+        {% endif %}
+        {% if book %}
+        <a class="btn btn-primary" href="{{ book.href }}">{{ book.label }}</a>
+        {% endif %}
+      </div>
+
+      {% if digest.trust %}
+      <ul class="stat-grid">
+        {% for item in digest.trust %}
+        <li class="stat"
+            data-digest-item="trust:{{ item.id }}"
+            data-template-block="stat">
+          <span class="stat-title">{{ item.label }}</span>
+          {% if item.detail %}
+          <span class="stat-label">{{ item.detail }}</span>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if digest.team %}
+  <!-- ============ TEAM ============ -->
+  <section class="section" id="team" data-digest-section="team">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow">Our Team</p>
+        <h2>Meet the practitioners</h2>
+      </header>
+
+      <ul class="person-grid">
+        {% for member in digest.team %}
+        <li class="person"
+            data-digest-item="member:{{ member.id }}"
+            data-template-block="person">
+          {# A real portrait where the digest has one; otherwise the CSS-drawn
+             faceless bust. Never a stock face standing in for a colleague. #}
+          {% if member.photo %}
+          <img class="person-photo" src="{{ member.photo.path }}" alt="{{ member.photo.alt }}">
+          {% else %}
+          <span class="person-photo" aria-hidden="true"></span>
+          {% endif %}
+          <h3 class="person-name">{{ member.name }}</h3>
+          {% if member.role %}
+          <p class="person-role">{{ member.role }}</p>
+          {% endif %}
+          {% if member.credentials %}
+          <p class="person-credentials">{{ member.credentials }}</p>
+          {% endif %}
+          {% if member.bio %}
+          <p class="person-bio">{{ member.bio }}</p>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if digest.testimonials %}
+  <!-- ============ PATIENT FEEDBACK (dark band; absent when the digest has none) ============ -->
+  <section class="section section-dark" id="testimonials" data-digest-section="testimonials">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow">Patient Feedback</p>
+        <h2>What people say</h2>
+      </header>
+
+      <ul class="quote-grid">
+        {% for item in digest.testimonials %}
+        <li class="quote-item"
+            data-digest-item="testimonial:{{ item.id }}"
+            data-template-block="quote">
+          <figure class="quote">
+            <blockquote class="quote-body">
+              <p>{{ item.quote }}</p>
+            </blockquote>
+            {% if item.author or item.role %}
+            <figcaption class="quote-cite">{{ item.author }}{% if item.author and item.role %} &middot; {% endif %}{{ item.role }}</figcaption>
+            {% endif %}
+          </figure>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if digest.products.categories %}
+  <!-- ============ PRODUCTS (the card grid from section 9, reused) ============ -->
+  <section class="section section-alt" id="products" data-digest-section="products">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow">Products</p>
+        <h2>What we carry</h2>
+      </header>
+
+      <ul class="card-grid">
+        {% for category in digest.products.categories %}
+        <li class="card"
+            data-digest-item="product-category:{{ category.id }}"
+            data-template-block="service-card">
+          <span class="card-mark" aria-hidden="true"></span>
+          <h3 class="card-title">{{ category.name }}</h3>
+          {% if category.description %}
+          <p class="card-text">{{ category.description }}</p>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if digest.faqs %}
+  <!-- ============ FAQ (details/summary - no JavaScript) ============ -->
+  <section class="section" id="faq" data-digest-section="faq">
+    <div class="wrap wrap-narrow">
+      <header class="section-head">
+        <p class="eyebrow">FAQ</p>
+        <h2>Frequently asked questions</h2>
+      </header>
+
+      <div class="faq-list">
+        {% for faq in digest.faqs %}
+        <details class="faq-item"
+                 data-digest-item="faq:{{ faq.id }}"
+                 data-template-block="faq-item">
+          <summary class="faq-question">{{ faq.question }}</summary>
+          <div class="faq-answer">
+            <p>{{ faq.answer }}</p>
+          </div>
+        </details>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if digest.ctas %}
+  <!-- ============ CALL-TO-ACTION BAND (one button per digest CTA) ============ -->
+  <section class="section cta-band" id="book" data-digest-section="booking">
+    <div class="wrap wrap-narrow cta-inner">
+      <h2>Book an appointment</h2>
+      <p class="cta-actions">
+        {% for cta in digest.ctas %}
+        <a class="btn btn-lg {% if cta.kind == 'primary' %}btn-primary{% else %}btn-ghost{% endif %}"
+           href="{{ cta.href }}"
+           data-digest-item="cta:{{ cta.id }}">{{ cta.label }}</a>
+        {% endfor %}
+      </p>
+    </div>
+  </section>
+  {% endif %}
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer" id="contact" data-digest-section="contact">
+  <div class="wrap footer-grid">
+
+    <div class="footer-col">
+{{ brand('brand-footer') }}
+    </div>
+
+    {% if address or digest.contact.phone or digest.contact.email or digest.location.map_url %}
+    <div class="footer-col">
+      <h2 class="footer-heading">Visit Us</h2>
+      {% if address %}
+      <address class="footer-address">
+        {% if address.street %}
+        {{ address.street }}<br>
+        {% endif %}
+        {% if address.city or address.region or address.postal_code %}
+        {{ address.city }}{% if address.city and address.region %}, {% endif %}{{ address.region }}{% if address.postal_code %} {{ address.postal_code }}{% endif %}
+        {% endif %}
+      </address>
+      {% endif %}
+      {% if digest.contact.phone or digest.contact.email or digest.location.map_url %}
+      <p class="footer-lines">
+        {% if digest.contact.phone %}
+        <a href="tel:{{ digest.contact.phone }}">{{ digest.contact.phone }}</a><br>
+        {% endif %}
+        {% if digest.contact.email %}
+        <a href="mailto:{{ digest.contact.email }}">{{ digest.contact.email }}</a><br>
+        {% endif %}
+        {% if digest.location.map_url %}
+        <a href="{{ digest.location.map_url }}">Get directions</a>
+        {% endif %}
+      </p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if digest.hours %}
+    <div class="footer-col" data-digest-section="hours">
+      <h2 class="footer-heading">Hours</h2>
+      <dl class="hours">
+        {% for day in digest.hours %}
+        <dt>{{ day.name }}</dt>
+        <dd>{{ day.range }}</dd>
+        {% endfor %}
+      </dl>
+    </div>
+    {% endif %}
+
+    {% if digest.social %}
+    <div class="footer-col">
+      <h2 class="footer-heading">Follow</h2>
+      <ul class="social-list">
+        {% for link in digest.social %}
+        <li><a class="social-link"
+               href="{{ link.href }}"
+               data-digest-item="social:{{ link.id }}">{{ link.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <div class="wrap footer-bottom">
+    <p>&copy; {% if digest.business.legal_name %}{{ digest.business.legal_name }}{% else %}{{ digest.business.name }}{% endif %}. All rights reserved.</p>
+    <p><a href="#main">Back to top</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

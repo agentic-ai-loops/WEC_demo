@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<build>
+  <renderer repository="agentic-ai-loops/webdev.ai" commit="dc6459037617332174a940bb4cdbb7b394eda8fa" resolvable="true"/>
+  <versions injector="0.1.0" jinja="3.1.4"/>
+  <customer slug="whitbyeyecare-com" template="meridian"/>
+  <layout digest="digest.xml" template="template" assets="assets" site="docs"/>
+  <note>The renderer is not in this repository. Rebuilding these bytes needs agentic-ai-loops/webdev.ai at the commit above, which is private. resolvable="false" means that commit has not been pushed anywhere, so it currently exists on one machine only.</note>
+</build>
