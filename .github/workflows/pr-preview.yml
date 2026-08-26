@@ -81,6 +81,39 @@ jobs:
             exit 1
           fi
 
+      # OIDC diagnostic. Dormant on ordinary runs: it executes only when the
+      # job is re-run with "Enable debug logging" ticked, which is exactly the
+      # moment an assume-role failure is being investigated.
+      #
+      # It prints the token's claims so they can be compared against the
+      # deploy role's trust policy. That comparison is the only reliable way
+      # to diagnose "Not authorized to perform sts:AssumeRoleWithWebIdentity",
+      # which STS returns for *every* trust-policy refusal regardless of which
+      # part actually refused — a missing sts:TagSession, a sub that does not
+      # match, an issuer the provider does not cover.
+      #
+      # The token is masked the instant it exists, so a careless later edit
+      # that echoes it prints *** instead. Do not remove that line: the raw
+      # JWT is a bearer credential for the deploy role, and site repositories
+      # are often public.
+      - name: Show OIDC claims
+        if: runner.debug == '1'
+        run: |
+          set -euo pipefail
+          TOKEN=$(curl -sSf \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" \
+            | jq -r '.value')
+          echo "::add-mask::$TOKEN"
+          PAYLOAD=$(printf '%s' "$TOKEN" | cut -d. -f2 | tr '_-' '/+')
+          case $(( ${#PAYLOAD} % 4 )) in
+            2) PAYLOAD="$PAYLOAD==" ;;
+            3) PAYLOAD="$PAYLOAD=" ;;
+          esac
+          printf '%s' "$PAYLOAD" | base64 -d | jq '{
+            iss, sub, aud, repository, ref, job_workflow_ref
+          }'
+
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
