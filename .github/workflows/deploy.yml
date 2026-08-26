@@ -1,0 +1,147 @@
+# Production deploy: sync site/ to S3 and invalidate the CloudFront cache.
+#
+# Authenticates with GitHub OIDC — there are no AWS access keys in this repo
+# or in its secrets. The role's ARN and the other per-site values live in
+# repository *variables* (not secrets; none of them are confidential, and
+# keeping them out of the tree keeps the AWS account ID off a public repo):
+#
+#   gh variable set AWS_ROLE_ARN                --repo <owner>/<repo>
+#   gh variable set AWS_REGION                  --repo <owner>/<repo>
+#   gh variable set S3_BUCKET                   --repo <owner>/<repo>
+#   gh variable set CLOUDFRONT_DISTRIBUTION_ID  --repo <owner>/<repo>
+#
+# See docs/aws-setup.md in website-hosting-ops.
+#
+# Production lives under the live/ prefix in the bucket and previews under
+# previews/. The viewer-request CloudFront Function maps a preview hostname or
+# a preview path onto those prefixes; production is whatever matches neither,
+# which is why the live site is served at the root of every domain the
+# distribution answers for. Keeping the two prefixes apart is what makes
+# --delete safe: a production deploy cannot reach into a colleague's open
+# preview.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  # Manual runs let you redeploy an older tag without a revert commit — this
+  # is the rollback story, since S3 has no "publish previous deploy" button.
+  workflow_dispatch:
+
+concurrency:
+  group: aws-deploy-production
+  # Never cancel a deploy mid-sync; a half-uploaded site is worse than a queue.
+  cancel-in-progress: false
+
+permissions:
+  id-token: write   # required to mint the OIDC token
+  contents: read
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check repository variables are set
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          set -euo pipefail
+          missing=""
+          for v in AWS_ROLE_ARN AWS_REGION S3_BUCKET CLOUDFRONT_DISTRIBUTION_ID; do
+            [ -n "${!v:-}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Unset repository variables:$missing"
+            echo "Set each with: gh variable set <NAME> --repo ${{ github.repository }}"
+            exit 1
+          fi
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Two passes, because one Cache-Control value cannot be right for both
+      # fingerprinted assets and the HTML that references them. Each pass's
+      # --delete only prunes objects matching that pass's own filters, so
+      # between them they cover everything under live/ and nothing outside it.
+      #
+      # Pass 1 assumes site/assets/ contains content-hashed filenames
+      # (app.4f3a2b.css). If your build does NOT fingerprint, delete this step
+      # — everything then falls through to the revalidating pass below, which
+      # is slower but never serves a stale asset.
+      #
+      # --size-only is safe here for that same reason, and it is what keeps the
+      # PUT count down. By default sync also uploads anything whose local mtime
+      # is newer than the object's, and a fresh checkout stamps every file with
+      # the checkout time — so without this flag every deploy re-uploads the
+      # entire site. --size-only compares size alone, and a fingerprinted key
+      # cannot hold different bytes. Do not copy the flag to the pass below,
+      # where an edit that happens to preserve the byte count would never ship.
+      #
+      # Neither this nor any other content comparison notices a *metadata*
+      # change: edit the --cache-control value here and existing objects keep
+      # the old header until you rewrite them by hand with
+      #   aws s3 cp s3://BUCKET/live/ s3://BUCKET/live/ --recursive \
+      #     --metadata-directive REPLACE --cache-control "<new value>"
+      - name: Sync fingerprinted assets
+        env:
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+        run: |
+          set -euo pipefail
+          aws s3 sync ./site "s3://$S3_BUCKET/live/" --delete --size-only \
+            --exclude "*" --include "assets/*" \
+            --cache-control "public,max-age=31536000,immutable"
+
+      # max-age and s-maxage are set separately on purpose. Browsers revalidate
+      # every time, so a deploy reaches a returning visitor immediately; the
+      # edge holds the HTML and the invalidation below is what releases it.
+      # Without s-maxage, CloudFront would apply max-age=0 to its own cache and
+      # go back to the bucket on nearly every page view.
+      #
+      # s-maxage is capped by the cache policy's maximum TTL, which is a year
+      # under the managed CachingOptimized policy the setup guide specifies.
+      - name: Sync everything else
+        env:
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+        run: |
+          set -euo pipefail
+          aws s3 sync ./site "s3://$S3_BUCKET/live/" --delete \
+            --exclude "assets/*" \
+            --cache-control "public,max-age=0,s-maxage=31536000,must-revalidate"
+
+      # One wildcard path, never a list of changed files.
+      #
+      # This step is not a nicety. Production HTML is held at the edge with
+      # s-maxage, so a sync that is not followed by an invalidation leaves the
+      # old page serving.
+      #
+      # "/*" rather than "/live/*" on purpose. The viewer-request function
+      # runs before the cache lookup, so the cache is keyed on the rewritten
+      # URI (/live/about/index.html) — but AWS's own guidance for a viewer
+      # function that rewrites URIs is to invalidate both the viewer's path
+      # and the rewritten one, and here the viewer's path is the bare site
+      # root. "/*" is the only wildcard that covers both, and it still counts
+      # as a single path.
+      #
+      # The side effect is that open previews are invalidated too. That is
+      # harmless: previews are stored with max-age=0 and get revalidated on
+      # request anyway.
+      - name: Invalidate the CloudFront cache
+        env:
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          set -euo pipefail
+          ID=$(aws cloudfront create-invalidation \
+                 --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+                 --paths "/*" \
+                 --query 'Invalidation.Id' --output text)
+          echo "Invalidation $ID created."

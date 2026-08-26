@@ -1,0 +1,98 @@
+# Delete the per-PR preview files when the PR closes.
+#
+# Unlike a preview that costs money per open PR, an orphaned prefix here only
+# consumes S3 storage — and the flat-rate Free plan credits 5 GB of S3
+# Standard storage, so a handful of leaks costs nothing. Cleanup still
+# matters, because the URLs stay live and publicly reachable until the files
+# are gone.
+#
+# This workflow does not catch every case: a branch deleted without closing
+# its PR, or a run cancelled midway, leaves the prefix behind. Back it up
+# with an S3 lifecycle rule expiring previews/ after 30 days — see
+# docs/aws-setup.md — and audit occasionally with:
+#
+#     aws s3 ls s3://<bucket>/previews/
+
+name: PR preview cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  cleanup:
+    name: cleanup preview
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Check repository variables are set
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          set -euo pipefail
+          missing=""
+          for v in AWS_ROLE_ARN AWS_REGION S3_BUCKET CLOUDFRONT_DISTRIBUTION_ID; do
+            [ -n "${!v:-}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Unset repository variables:$missing"
+            exit 1
+          fi
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Delete the preview files
+        env:
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          # Must derive the prefix identically to pr-preview.yml, or cleanup
+          # silently deletes nothing and reports success.
+          PREFIX="previews/pr-${PR}"
+
+          aws s3 rm "s3://$S3_BUCKET/$PREFIX/" --recursive
+
+          # Without this, edge caches keep serving the deleted preview until
+          # their TTLs expire.
+          aws cloudfront create-invalidation \
+            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/$PREFIX/*" > /dev/null
+
+      - name: Note the teardown on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          MARKER="<!-- aws-pr-preview -->"
+          COMMENT_ID=$(gh api "repos/$REPO/issues/$PR/comments" \
+            --jq "[.[] | select(.body | startswith(\"$MARKER\"))] | first | .id // empty")
+
+          [ -n "$COMMENT_ID" ] || exit 0
+
+          BODY=$(cat <<EOF
+          $MARKER
+          ### Preview deploy
+
+          Torn down — this PR is closed.
+          EOF
+          )
+          gh api --method PATCH "repos/$REPO/issues/comments/$COMMENT_ID" \
+            -f body="$BODY" > /dev/null

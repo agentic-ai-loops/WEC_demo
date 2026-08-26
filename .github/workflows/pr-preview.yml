@@ -1,0 +1,222 @@
+# Per-PR preview deploys on CloudFront.
+#
+# CloudFront has no built-in deploy previews, so this builds them from parts
+# you already have: the PR's files go to previews/pr-<N>/ in the same bucket,
+# and the viewer-request CloudFront Function maps a preview URL onto that
+# prefix. Two URL shapes, decided by whether PREVIEW_DOMAIN is set:
+#
+#   PREVIEW_DOMAIN set    https://pr-<N>.<PREVIEW_DOMAIN>/
+#   PREVIEW_DOMAIN unset  https://<CLOUDFRONT_DOMAIN>/pr-<N>/
+#
+# The S3 prefix and the invalidation path are identical either way, so setting
+# PREVIEW_DOMAIN later changes the URL and nothing else.
+#
+# Nothing per-PR is created on the AWS side — no distribution, no
+# certificate, no DNS record. That is what keeps previews inside a single
+# flat-rate plan and free of any per-PR cost. pr-preview-cleanup.yml deletes
+# the prefix when the PR closes.
+#
+# Requires the same repository variables as deploy.yml, plus CLOUDFRONT_DOMAIN
+# (the distribution's own dXXXX.cloudfront.net name). PREVIEW_DOMAIN
+# (e.g. "preview.example.com") is optional and needs a wildcard certificate
+# and DNS record. See docs/aws-setup.md in website-hosting-ops.
+#
+# READ THIS IF PREVIEW_DOMAIN IS UNSET. A preview page whose HTML says
+# href="/assets/app.css" requests a path with no PR number in it, so it falls
+# through to production's copy of that asset — silently. Author with relative
+# links, or set REWRITE_ROOT_LINKS to "true" and read what that step does
+# below. Neither is needed once PREVIEW_DOMAIN is set.
+#
+# NOTE: this deploys the PR branch TIP, not the result of merging into main.
+# If main moves while the PR is open, the preview will not reflect it.
+
+name: PR preview
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+concurrency:
+  group: aws-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  # The job name is the status check context. To require it before merge:
+  #   setup-branch-protection.sh <owner/repo> --required-check "preview"
+  preview:
+    name: preview
+    runs-on: ubuntu-latest
+
+    # A fork PR gets no OIDC token for this account, so the deploy would fail
+    # rather than merely be denied. Client work runs on same-repo branches;
+    # skip forks instead of failing on them.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # PREVIEW_DOMAIN is deliberately not in this list. Unset is a supported
+      # configuration, not a misconfiguration.
+      - name: Check repository variables are set
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+          CLOUDFRONT_DOMAIN: ${{ vars.CLOUDFRONT_DOMAIN }}
+        run: |
+          set -euo pipefail
+          missing=""
+          for v in AWS_ROLE_ARN AWS_REGION S3_BUCKET CLOUDFRONT_DISTRIBUTION_ID CLOUDFRONT_DOMAIN; do
+            [ -n "${!v:-}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Unset repository variables:$missing"
+            echo "Set each with: gh variable set <NAME> --repo ${{ github.repository }}"
+            exit 1
+          fi
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Opt-in, and only useful when PREVIEW_DOMAIN is unset. Rewrites
+      # root-relative href/src in the uploaded copy of the HTML so they point
+      # inside this PR's path. The working copy is CI-only; nothing is
+      # committed.
+      #
+      # WHAT IT DOES NOT CATCH, because a regex over HTML cannot: srcset,
+      # url() inside inline <style>, absolute paths in inline <script> or
+      # JSON-LD, og:image and other meta content, and anything a client-side
+      # router builds at runtime. Protocol-relative //host/path is excluded on
+      # purpose. If the site has a build step, set its base path instead — that
+      # is the tool built for this job.
+      - name: Rewrite root-relative links into the preview path
+        if: ${{ vars.PREVIEW_DOMAIN == '' && vars.REWRITE_ROOT_LINKS == 'true' }}
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          count=$(find ./site -name '*.html' | wc -l)
+          echo "rewriting root-relative links in $count HTML file(s) -> /pr-${PR}/"
+          find ./site -name '*.html' -print0 | xargs -0 --no-run-if-empty sed -i -E \
+            -e "s#(href|src)=\"/([^/\"])#\1=\"/pr-${PR}/\2#g" \
+            -e "s#(href|src)=\"/\"#\1=\"/pr-${PR}/\"#g"
+
+      - name: Publish the preview
+        env:
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          PREVIEW_DOMAIN: ${{ vars.PREVIEW_DOMAIN }}
+          CLOUDFRONT_DOMAIN: ${{ vars.CLOUDFRONT_DOMAIN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          # Must match the prefix the viewer-request function derives from the
+          # hostname or the path, or the preview URL will serve a 404. It is
+          # the same prefix in both modes, which is what makes switching modes
+          # a URL change and nothing more.
+          PREFIX="previews/pr-${PR}"
+
+          # No immutable pass here. A reviewer refreshing the page has to see
+          # the latest push, and preview traffic is far too small for the
+          # extra origin fetches to matter.
+          aws s3 sync ./site "s3://$S3_BUCKET/$PREFIX/" --delete \
+            --cache-control "public,max-age=0,must-revalidate"
+
+          if [ -n "${PREVIEW_DOMAIN:-}" ]; then
+            URL="https://pr-${PR}.${PREVIEW_DOMAIN}/"
+          else
+            # The trailing slash is load-bearing: without it the function
+            # answers 301 and relative links on the landing page resolve
+            # against the parent.
+            URL="https://${CLOUDFRONT_DOMAIN}/pr-${PR}/"
+          fi
+
+          {
+            echo "PREFIX=$PREFIX"
+            echo "PREVIEW_URL=$URL"
+          } >> "$GITHUB_ENV"
+
+      # Scoped to this PR's prefix, not "/*", so a push to one PR does not
+      # flush production's cache. Deliberately narrower than deploy.yml: the
+      # preview's own freshness does not depend on this invalidation, because
+      # preview objects carry max-age=0 and are revalidated on request. This
+      # is belt-and-braces.
+      - name: Invalidate the preview path
+        env:
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          set -euo pipefail
+          aws cloudfront create-invalidation \
+            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/$PREFIX/*" > /dev/null
+
+      - name: Post the preview URL to the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PREVIEW_DOMAIN: ${{ vars.PREVIEW_DOMAIN }}
+          REWRITE_ROOT_LINKS: ${{ vars.REWRITE_ROOT_LINKS }}
+        run: |
+          set -euo pipefail
+
+          # In path mode a root-relative link leaves the preview and lands on
+          # production without erroring, so a reviewer can be looking at this
+          # branch's HTML with main's stylesheet. Say so in the comment rather
+          # than hoping they know.
+          NOTE=""
+          if [ -z "${PREVIEW_DOMAIN:-}" ]; then
+            NOTE="This preview is served under a path, so any \`/absolute\` "
+            NOTE="${NOTE}link in the HTML resolves to the **live site**, not to "
+            NOTE="${NOTE}this branch."
+            if [ "${REWRITE_ROOT_LINKS:-}" = "true" ]; then
+              NOTE="${NOTE} \`REWRITE_ROOT_LINKS\` is on, which fixes "
+              NOTE="${NOTE}\`href\`/\`src\` in HTML but not \`srcset\`, "
+              NOTE="${NOTE}\`url()\` in inline CSS, or paths built in JS."
+            else
+              NOTE="${NOTE} Use relative links (\`assets/app.css\`) to be sure "
+              NOTE="${NOTE}you are seeing this branch."
+            fi
+          fi
+
+          MARKER="<!-- aws-pr-preview -->"
+          BODY=$(cat <<EOF
+          $MARKER
+          ### Preview deploy
+
+          **$PREVIEW_URL**
+
+          Branch \`$HEAD_BRANCH\` at \`${HEAD_SHA:0:7}\`, served from
+          \`$PREFIX/\`. The URL is stable for the life of this PR and is safe
+          to send to a reviewer as a bookmark.
+
+          $NOTE
+
+          This is the branch tip, not the result of merging into \`main\`. If
+          \`main\` has moved since this branch was cut, the preview does not
+          reflect that. The files are deleted automatically when this PR
+          closes.
+          EOF
+          )
+
+          # Update the existing comment rather than adding one per push.
+          COMMENT_ID=$(gh api "repos/$REPO/issues/$PR/comments" \
+            --jq "[.[] | select(.body | startswith(\"$MARKER\"))] | first | .id // empty")
+
+          if [ -n "$COMMENT_ID" ]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$COMMENT_ID" \
+              -f body="$BODY" > /dev/null
+          else
+            gh api --method POST "repos/$REPO/issues/$PR/comments" \
+              -f body="$BODY" > /dev/null
+          fi
