@@ -57,6 +57,12 @@ jobs:
     # skip forks instead of failing on them.
     if: github.event.pull_request.head.repo.full_name == github.repository
 
+    # The directories fingerprint.py renames files in. Keep this the same
+    # list as deploy.yml's: a preview is only worth anything if it exercises
+    # the transform production will apply.
+    env:
+      FINGERPRINT_ROOTS: assets media
+
     steps:
       - uses: actions/checkout@v7
 
@@ -80,6 +86,16 @@ jobs:
             echo "Set each with: gh variable set <NAME> --repo ${{ github.repository }}"
             exit 1
           fi
+
+      # Same transform production gets, for the same reason a preview exists
+      # at all: a reference this breaks should break here, in a PR check, and
+      # not on the live site. It buys no caching — preview objects are
+      # uploaded with max-age=0 below — so fidelity is the whole point.
+      #
+      # This runs before the root-link rewrite below, which must see the
+      # final filenames.
+      - name: Fingerprint assets
+        run: python3 scripts/fingerprint.py ./site $FINGERPRINT_ROOTS
 
       # OIDC diagnostic. Dormant on ordinary runs: it executes only when the
       # job is re-run with "Enable debug logging" ticked, which is exactly the
