@@ -43,6 +43,14 @@ jobs:
     name: deploy
     runs-on: ubuntu-latest
 
+    # The directories fingerprint.py renames files in, and the same
+    # directories the immutable Cache-Control below applies to. One list, so
+    # the two cannot drift — a file that carries a hash of its own bytes in
+    # its name is exactly the file that is safe to keep for a year. Add a
+    # root here (fonts, vendor) and both halves follow.
+    env:
+      FINGERPRINT_ROOTS: assets media
+
     steps:
       - uses: actions/checkout@v7
 
@@ -63,6 +71,23 @@ jobs:
             echo "Set each with: gh variable set <NAME> --repo ${{ github.repository }}"
             exit 1
           fi
+
+      # Renames every file under FINGERPRINT_ROOTS to carry a hash of its own
+      # contents — media/logo.png becomes media/logo.4f3a2b19.png — and
+      # rewrites every reference to it in the HTML, CSS and SVG that point
+      # there. That is what earns the immutable Cache-Control below: a key
+      # whose name contains its own hash can never come back holding
+      # different bytes.
+      #
+      # This edits the checkout, not the repository. Nothing is committed and
+      # the tree in git stays exactly what the build produced, so the hashed
+      # names exist only for the length of this job.
+      #
+      # It also prints two things worth reading when a deploy looks wrong: any
+      # reference into those roots that resolves to nothing, and any asset
+      # nothing appears to reference.
+      - name: Fingerprint assets
+        run: python3 scripts/fingerprint.py ./site $FINGERPRINT_ROOTS
 
       # OIDC diagnostic. Dormant on ordinary runs: it executes only when the
       # job is re-run with "Enable debug logging" ticked, which is exactly the
@@ -107,10 +132,11 @@ jobs:
       # --delete only prunes objects matching that pass's own filters, so
       # between them they cover everything under live/ and nothing outside it.
       #
-      # Pass 1 assumes site/assets/ contains content-hashed filenames
-      # (app.4f3a2b.css). If your build does NOT fingerprint, delete this step
-      # — everything then falls through to the revalidating pass below, which
-      # is slower but never serves a stale asset.
+      # Pass 1 covers exactly what the fingerprint step renamed, which is
+      # what makes "immutable" a promise this can keep. Remove that step and
+      # remove this pass with it — everything then falls through to the
+      # revalidating pass below, which is slower but never serves a stale
+      # asset.
       #
       # --size-only is safe here for that same reason, and it is what keeps the
       # PUT count down. By default sync also uploads anything whose local mtime
@@ -130,8 +156,10 @@ jobs:
           S3_BUCKET: ${{ vars.S3_BUCKET }}
         run: |
           set -euo pipefail
+          include=()
+          for root in $FINGERPRINT_ROOTS; do include+=(--include "$root/*"); done
           aws s3 sync ./site "s3://$S3_BUCKET/live/" --delete --size-only \
-            --exclude "*" --include "assets/*" \
+            --exclude "*" "${include[@]}" \
             --cache-control "public,max-age=31536000,immutable"
 
       # max-age and s-maxage are set separately on purpose. Browsers revalidate
@@ -147,8 +175,10 @@ jobs:
           S3_BUCKET: ${{ vars.S3_BUCKET }}
         run: |
           set -euo pipefail
+          exclude=()
+          for root in $FINGERPRINT_ROOTS; do exclude+=(--exclude "$root/*"); done
           aws s3 sync ./site "s3://$S3_BUCKET/live/" --delete \
-            --exclude "assets/*" \
+            "${exclude[@]}" \
             --cache-control "public,max-age=0,s-maxage=31536000,must-revalidate"
 
       # One wildcard path, never a list of changed files.
