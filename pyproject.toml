@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-intelliw = "intelliw.cli.main:app"
+adm = "intelliw.cli.adm:app"
 svr = "intelliw.cli.svr:app"
 client-cli = "intelliw.cli.client:app"
 business = "intelliw.cli.business:app"

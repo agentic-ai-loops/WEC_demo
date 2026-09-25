@@ -1,4 +1,4 @@
-"""`intelliw`: workspace/site tools."""
+"""`adm`: workspace/site tools."""
 
 from pathlib import Path
 

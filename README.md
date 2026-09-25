@@ -16,7 +16,7 @@ src/intelliw/
   site/               #site: rendering businessdata x design -> static site
   graphql/            Strawberry GraphQL schema + server (workhorse for #businessdata)
   mcp/                MCP server exposing the above to owner agents
-  cli/                typer CLIs: `intelliw` (site), `svr` (servers), `client-cli` (test client),
+  cli/                typer CLIs: `adm` (site), `svr` (servers), `client-cli` (test client),
                       `business` (inspect #businessdata)
   config.py           Settings from environment / .env
   checks.py           Health checks used by `svr`
@@ -31,8 +31,32 @@ tests/                pytest suite
 uv sync                                   # install deps
 uv run pytest                             # run tests
 uv run ruff check . && uv run ruff format .
-uv run intelliw build examples/demo            # render examples/demo/_site
+uv run adm build examples/demo                 # render examples/demo/_site
 ```
+
+## Make targets
+
+```bash
+make mcp-start      # MCP server + GraphQL in the background (log in .run/mcp.log)
+make mcp-stop       # stop it (also: make mcp-restart, make mcp-status)
+make reimport       # rebuild examples/whitby_eye_care from digest.xml (restarts a running server)
+make claude         # start Claude Code connected to the MCP server
+```
+
+Settings come from `.env`; override per call, e.g. `make mcp-start MCP_PORT=9102`.
+`make claude` starts an owner agent isolated from this repository, so it can only learn
+about the business through MCP:
+
+- all built-in tools are disabled (`--tools ""`): no file access, no shell;
+- it runs in an empty directory outside the home directory (`CLAUDE_DIR`, default
+  `/tmp/intelliw-owner-agent`): no CLAUDE.md from this repo, its own memory and session
+  history (so `--continue` there resumes only owner-agent sessions);
+- only the intelliw MCP server is connected (`--strict-mcp-config`).
+
+The read-only tools (`graphql_query`, `graphql_schema`) are pre-approved; `graphql_mutate`
+asks before each change. It uses Sonnet (`make claude CLAUDE_MODEL=opus` to change).
+Extra flags: `make claude CLAUDE_ARGS="..."`. Your user-level Claude Code settings and
+`~/.claude/CLAUDE.md` still apply.
 
 ## Servers
 
@@ -58,8 +82,9 @@ uv run client-cli graphql --gql '{ business { name } staff { name languages } }'
 echo '{ hello { message } }' | uv run client-cli graphql --stdin
 uv run client-cli schema                  # print SDL via introspection
 uv run client-cli mcp --list              # tools / resources / prompts
-uv run client-cli mcp --tool query --gql '{ hello { message } }'
-uv run client-cli mcp --resource <uri>
+uv run client-cli mcp --tool graphql_query --document '{ staff { name } }'
+uv run client-cli mcp --tool graphql_mutate --document 'mutation { takeSnapshot { number } }'
+uv run client-cli mcp --resource graphql://schema
 uv run client-cli mcp --prompt <name> --<arg> <value>
 ```
 

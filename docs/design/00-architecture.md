@@ -33,11 +33,11 @@ Python package `intelliw`:
 | `intelliw.graphql`      | Strawberry GraphQL API over #businessdata                  |
 | `intelliw.mcp`          | MCP server; `query(gql)` forwards to the GraphQL API       |
 | `intelliw.config`       | Settings from environment / `.env`                         |
-| `intelliw.cli`          | `intelliw` (site), `svr` (servers), `client-cli` (testing) |
+| `intelliw.cli`          | `adm` (site), `svr` (servers), `client-cli` (testing)      |
 
 Request flow: #owner agent → MCP (`query` tool) → GraphQL → #businessdata.
 
 ## Acceptance criteria
 
-- [x] `uv run intelliw build examples/demo` produces `examples/demo/_site/index.html`.
+- [x] `uv run adm build examples/demo` produces `examples/demo/_site/index.html`.
 - [x] `uv run pytest` passes.
