@@ -1,0 +1,51 @@
+{
+  "slots": {
+    "hero": {
+      "image": "assets/hero.png",
+      "alt": "Hero family sunglasses"
+    },
+    "about": {
+      "image": "businessdata:about-clinic"
+    },
+    "service-illustration": {
+      "per": "services",
+      "default": null,
+      "bindings": {
+        "adult-senior-eye-exams": {
+          "image": "assets/adult-senior-eye-exams.png",
+          "alt": "Photograph illustrating adult and senior eye exams"
+        },
+        "children-eye-exams": {
+          "image": "assets/children-eye-exams.png",
+          "alt": "Photograph illustrating children's eye exams"
+        },
+        "mto-and-police-eye-exams": {
+          "image": "assets/mto-and-police-eye-exams.png",
+          "alt": "Photograph illustrating MTO and police eye exams"
+        },
+        "contact-lens-fitting": {
+          "image": "assets/contact-lens-fitting.png",
+          "alt": "Photograph illustrating contact lens fitting"
+        },
+        "computer-related-eye-strain": {
+          "image": "assets/computer-related-eye-strain.png",
+          "alt": "Photograph illustrating computer-related eye strain"
+        }
+      }
+    },
+    "product-category-illustration": {
+      "per": "product_categories",
+      "default": null,
+      "bindings": {
+        "contact-lenses": {
+          "image": "assets/contact-lenses.png",
+          "alt": "Photograph illustrating contact lenses"
+        },
+        "sunglasses": {
+          "image": "assets/sunglasses.png",
+          "alt": "Photograph illustrating sunglasses and eyewear"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{% extends "_base.html.j2" %}
+{% block content %}
+<header>
+  <h1>{{ business.name }}</h1>
+  <p class="tagline">{{ business.tagline }}</p>
+</header>
+<main>
+  <p>{{ business.description }}</p>
+</main>
+{% endblock %}

@@ -1,0 +1,54 @@
+[project]
+name = "intelliw"
+version = "0.1.0"
+description = "AI-agent-driven web presence for small businesses, via MCP"
+authors = [
+    { name = "Ken Pu", email = "kenpu@pop-os.oncampus.local" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "jinja2>=3.1.6",
+    "mcp>=2.2.0",
+    "pydantic>=2.13.5",
+    "python-dotenv>=1.2.3",
+    "rich>=15.0.0",
+    "sqlalchemy>=2.1.0",
+    "strawberry-graphql>=0.327.7",
+    "typer>=0.27.2",
+]
+
+[project.scripts]
+intelliw = "intelliw.cli.main:app"
+svr = "intelliw.cli.svr:app"
+client-cli = "intelliw.cli.client:app"
+business = "intelliw.cli.business:app"
+
+[build-system]
+requires = ["uv_build>=0.9.26,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.8",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+# Strawberry's pydantic decorator returns a type ty cannot use in annotations; the
+# GraphQL package annotates resolvers with those types throughout.
+[[tool.ty.overrides]]
+include = ["src/intelliw/graphql/**"]
+
+[tool.ty.overrides.rules]
+invalid-type-form = "ignore"

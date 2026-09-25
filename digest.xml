@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<digest slug="whitbyeyecare-com" version="1.0">
+  <business>
+    <name confidence="high" source="crawl:index.html">Whitby Eye Care</name>
+    <legal-name confidence="medium" needs-review="true" source="crawl:index.html" note="Your site calls the practice three slightly different things: most pages say simply 'Whitby Eye Care', the business listing built into your site's code says 'Whitby Eye Care - Dr. R. Fernando &amp; Associates', and your Google Maps listing is under 'Dr. R. Fernando &amp; Associates'. Please tell us the full name you would like shown as the official business name.">Whitby Eye Care - Dr. R. Fernando &amp; Associates</legal-name>
+    <tagline confidence="high" source="crawl:index.html">Trust a professional with your eyecare needs… Your eyes deserve an optometrist!</tagline>
+    <category confidence="high" source="crawl:our-practice.html">Independent optometry clinic</category>
+    <description confidence="high" source="crawl:about-us.html">Dr Fernando (optometrist), and his eye care team strive to provide you with the highest level of eye care services and products in an environment that is caring, positive, pleasant, and professional. We are located in Whitby, Ontario serving surrounding areas such as Oshawa, Ajax, Scarborough and Pickering. Our complete eye health examinations test both your visual and ocular health. Visual deficiencies in young children can result in strabismus (crossed eyes), amblyopia (lazy eye) or focusing difficulties, and adults and seniors need to be tested for cataracts, glaucoma, macular degeneration, retinal detachment and several other conditions we assess in our routine examination. Many visual problems can be corrected with glasses, contact lenses, or laser vision correction. Whether you want a spectacular new look with one of our designer frames or designer sunglasses, or the latest innovations in contact lens technology, our experienced and knowledgeable eye team will be there for your personalized fitting.</description>
+  </business>
+  <brand>
+    <logo asset="logo" source="crawl:index.html"/>
+    <favicon asset="favicon" source="crawl:index.html"/>
+  </brand>
+  <contact>
+    <phone confidence="high" label="Main" source="crawl:index.html">905-655-6236</phone>
+    <email confidence="high" label="General enquiries" source="crawl:index.html">info@whitbyeyecare.com</email>
+    <email confidence="high" label="Appointments" needs-review="true" source="crawl:our-practice.html" note="Your Our Practice page invites patients to email dr.r.fernando@gmail.com to book an appointment, alongside the info@whitbyeyecare.com address used everywhere else. Would you like the personal Gmail address published on the new site, or should everything point to info@whitbyeyecare.com?">dr.r.fernando@gmail.com</email>
+    <booking-url confidence="medium" needs-review="true" source="crawl:appointment.html" note="Your site has two different ways to book. Every 'Book Appointment' button goes to the Atlas booking system at atlas.opto.com, but your own Book an Appointment page shows a separate JotForm booking form instead. We have used the Atlas link because it is the one on every page. Please confirm which booking system you actually want patients to use.">https://atlas.opto.com/v1/Router/8090/bookAppointment/?lang=En</booking-url>
+  </contact>
+  <locations>
+    <location id="whitby" confidence="high" source="crawl:contact.html">
+      <name confidence="high" source="crawl:contact.html">Whitby Eye Care</name>
+      <address confidence="high" source="crawl:index.html">
+        <street confidence="high" source="crawl:index.html">4091 Thickson Road North, Unit 2</street>
+        <city confidence="high" source="crawl:index.html">Whitby</city>
+        <region confidence="high" source="crawl:index.html">ON</region>
+        <postal-code confidence="high" source="crawl:index.html">L1R 2X3</postal-code>
+        <country confidence="high" source="crawl:index.html">CA</country>
+      </address>
+      <phone confidence="high" source="crawl:contact.html">905-655-6236</phone>
+      <map-url confidence="low" needs-review="true" source="crawl:index.html" note="The Google Maps link in your site's footer and the map position stored in your site's code point to two different places, roughly two kilometres apart. We have kept the Google Maps link. Please confirm the map pin lands on your door at 4091 Thickson Road North, Unit 2.">https://www.google.co.in/maps/place/Dr.+R.+Fernando+%26+Associates/@43.9232459,-78.9279937,16.5z/data=!4m5!3m4!1s0x89d51c1e0b43d2bb:0x827e021fd7688082!8m2!3d43.9234837!4d-78.9259917</map-url>
+    </location>
+  </locations>
+  <hours confidence="medium" needs-review="true" source="crawl:contact.html" note="Your opening hours appear in four places on your current site, and they tell two different stories. Three of them agree: your footer, your Contact Us page and the business listing built into your site's code all say Monday 9am-7pm, Tuesday 9am-5pm, Wednesday 9am-7pm, Thursday 9am-7pm, Friday 10am-5pm, Saturday 9am-3pm, closed Sunday. The one that differs is the 'Opening Times' box in the right-hand sidebar of your service pages: Monday to Thursday 10am-7pm, Friday 10am-5pm, Saturday 9am-4pm, and nothing about Sunday. So the disagreement is about when you open Monday to Thursday (9am or 10am), when you close on Tuesday (5pm or 7pm) and when you close on Saturday (3pm or 4pm). Only Friday matches. We have used the set that three of the four sources agree on — but please confirm your real hours before the new site goes live.">
+    <day close="19:00" name="Monday" open="09:00" source="crawl:contact.html"/>
+    <day close="17:00" name="Tuesday" open="09:00" source="crawl:contact.html"/>
+    <day close="19:00" name="Wednesday" open="09:00" source="crawl:contact.html"/>
+    <day close="19:00" name="Thursday" open="09:00" source="crawl:contact.html"/>
+    <day close="17:00" name="Friday" open="10:00" source="crawl:contact.html"/>
+    <day close="15:00" name="Saturday" open="09:00" source="crawl:contact.html"/>
+    <day closed="true" name="Sunday" source="crawl:contact.html"/>
+  </hours>
+  <services>
+    <service id="eye-exams" category="Eye exams" confidence="high" source="crawl:eye-exams.html">
+      <name source="crawl:eye-exams.html">Eye Exams</name>
+      <summary source="inferred">A full eye examination that checks your prescription and the health of your eyes.</summary>
+      <description source="crawl:eye-exams.html">A friendly staff member will start the exam with a computerized automated refraction and eye pressure testing. You will then see the doctor for your examination. The exam will start off with a thorough history of your previous eye exams, medications and family medical history. The doctor will then check your eyeglass prescription for distance and near/computer vision. A detailed ocular health assessment follows, where cataracts, glaucoma, retinal disease and a host of other conditions are evaluated. Pupillary dilation may be required. The doctor will then summarize the results and provide a written prescription. Your optometrist can also prescribe medications to treat eye infections and other eye conditions. We have digital retinal imaging to monitor your retina for diabetic retinopathy, glaucoma, and macular degeneration, and we perform MTO (Ministry of Transport) vision assessments and Esterman visual field testing.</description>
+    </service>
+    <service id="adult-senior-eye-exams" category="Eye exams" confidence="high" source="crawl:adult-senior-eye-exams.html">
+      <name source="crawl:adult-senior-eye-exams.html">Adult &amp; Senior Eye Exams</name>
+      <summary source="inferred">Annual comprehensive exams for adults and seniors, including screening for cataracts, glaucoma and macular degeneration.</summary>
+      <description source="crawl:adult-senior-eye-exams.html">Annual eye exams are recommended for adults and seniors. A comprehensive eye exam not only tests your eyeglass prescription but also tests for a variety of common ocular health conditions and disease. Conditions such as cataracts, diabetic retinopathy, glaucoma, and macular degeneration are just a few that can be detected only through a comprehensive eye examination. A friendly staff member will start the exam with computerized automated refraction and eye pressure testing. You will then see the doctor, who begins with a thorough history of your previous eye exams, medications, and family medical history, then checks your eyeglass prescription for distance and near/computer vision. A detailed ocular health assessment follows, where cataracts, glaucoma, retinal disease and a host of other conditions are evaluated. Pupillary dilation may be required, and advanced testing such as Optical Coherence Tomography (OCT), retinal photos and visual field testing may be recommended. The doctor will then summarize the results and provide a written prescription.</description>
+      <audience source="crawl:adult-senior-eye-exams.html">Adults and seniors</audience>
+      <image asset="adult-senior-exam" source="crawl:adult-senior-eye-exams.html"/>
+    </service>
+    <service id="children-eye-exams" category="Eye exams" confidence="high" source="crawl:children-eye-exams.html">
+      <name source="crawl:children-eye-exams.html">Children’s Eye Exams</name>
+      <summary source="inferred">Gentle, thorough eye exams for babies, pre-schoolers and school-age children.</summary>
+      <description source="crawl:children-eye-exams.html">Annual eye exams are recommended for children under the age of 19. Babies are recommended to have their first exam at 6 months, with annual exams after that. It is especially important that children have their pre-school eye exam at 4 to 5 years of age. There are several eye conditions that must be evaluated in childhood: conditions such as strabismus (crossed eyes or eye turns) and amblyopia (lazy eye) must be detected and treated early to ensure proper visual development. A child’s exam starts with an auto-refraction to measure their prescription. The doctor then tests visual acuity, fine tunes the prescription, and checks into ocular health. In addition to the usual health checks, pupillary reflex testing, stereo-vision, cover test, extraocular movement, and colour vision testing are an important part of a child’s eye exam.</description>
+      <audience source="crawl:children-eye-exams.html">Children under 19, from 6 months of age</audience>
+      <image asset="childrens-exam" source="crawl:children-eye-exams.html"/>
+    </service>
+    <service id="mto-and-police-eye-exams" category="Eye exams" confidence="high" source="crawl:mto-and-police-eye-exams.html">
+      <name source="crawl:mto-and-police-eye-exams.html">MTO and Police Eye Exams</name>
+      <summary source="inferred">Occupational vision testing and paperwork for driving, policing and other job requirements.</summary>
+      <description source="crawl:mto-and-police-eye-exams.html">We perform all the tests necessary to fill out your application for Police, RCMP, Ministry of Transportation, or other occupational eye exams. We have colour vision testing, stereo vision testing as well as peripheral vision testing.</description>
+      <audience source="crawl:mto-and-police-eye-exams.html">Police, RCMP, Ministry of Transportation and other occupational applicants</audience>
+      <image asset="occupational-eye-exams" source="crawl:mto-and-police-eye-exams.html"/>
+    </service>
+    <service id="contact-lens-fitting" category="Contact lenses" confidence="high" source="crawl:contact-lens-fitting.html">
+      <name source="crawl:contact-lens-fitting.html">Contact Lens Fitting</name>
+      <summary source="inferred">Fitting, training and free trial lenses for new and experienced contact lens wearers.</summary>
+      <description source="crawl:contact-lens-fitting.html">Advances in contact lens technology have made them much healthier to wear. Newer silicone-hydrogel materials allow more oxygen through the lens, allowing your eyes to breathe, which reduces signs of corneal hypoxia. One-day disposable lenses reduce eye infections as compared to reusable lenses. New contact lens wearers first get a comprehensive eye exam, followed by a discussion on the suitability of contact lenses. Candidates then go through a training process where they are shown how to insert and remove lenses, and lenses are checked for excellent fit and vision. An optometrist or optician will ensure an optimal lens fitting for maximal comfort and ocular health. New wearers are sent home with a set of free trial lenses to test out in their normal daily routine; once satisfied, the lenses can be purchased at our office. We carry all the major brands as well as custom order lenses, there is no charge for exchanges of unused boxes, no charge for follow-up visits for problems related to lenses purchased at our office, big savings with manufacturer rebate offers, and convenient direct shipping to your home.</description>
+      <image asset="contact-lens-fitting" source="crawl:contact-lens-fitting.html"/>
+    </service>
+    <service id="dry-eye-testing" category="Dry eye" confidence="high" source="crawl:dry-eye-testing.html">
+      <name source="crawl:dry-eye-testing.html">Dry Eye Testing</name>
+      <summary source="inferred">Diagnostic testing for dry eye disease, with IPL and radiofrequency treatment in the clinic.</summary>
+      <description source="crawl:dry-eye-testing.html">Do your eyes feel sandy or gritty? Or do they water for no particular reason? If so you may have dry eye disease. Dry eye disease occurs when your tear quality or quantity is abnormal. We have specialized diagnostic tests, as well as state of the art treatment for dry eye disease. Dry eye diagnostic testing with the IDRA includes meibography, tear film analysis and blepharitis assessment. Intense Pulsed Light (IPL) has been shown to relieve dry eye symptoms through its thermal action, by melting away thick oil clogging up the meibomian glands; IPL also shrinks the fine blood vessels on the lid margin that carry inflammatory factors, and helps reduce sun damage, fine lines and wrinkles by boosting production of skin firming proteins like collagen and elastin. During IPL treatment the pulses may cause a snapping sensation and warmth; following your treatment brown spots will darken and skin may appear red for up to 24 hours, and your improved complexion should be visible three weeks post treatment. Best results typically require 4-5 treatments spaced one month apart. The Radio Frequency (RF) procedure generates heat at an optimal temperature within the eyelid tissue, melting the oil that is clogging the glands so it can be expressed easily; as a bonus, RF reduces skin laxity and promotes collagen growth, resulting in wrinkle reduction.</description>
+      <image asset="dry-eye-device" source="crawl:dry-eye-testing.html"/>
+    </service>
+    <service id="blephex-treatment" category="Dry eye" confidence="high" source="crawl:blephex-treatment.html">
+      <name source="crawl:blephex-treatment.html">BlephEx Treatment</name>
+      <summary source="inferred">A painless in-office eyelid cleaning that clears the bacteria and debris behind blepharitis.</summary>
+      <description source="crawl:blephex-treatment.html">Do you frequently experience red irritated eyes, a sandy or gritty feeling and flaky material on your lids and eyelashes? This is likely due to an overgrowth of bacteria on your eyelids. Symptoms of blepharitis include burning, itching, watery eyes and crusty eyelids. If left untreated, blepharitis can result in dry eyes, infections and the formation of styes. BlephEx™ is a tool that painlessly removes eyelid debris and the bacteria that grow in this debris. It uses a microsponge and medical detergent to gently cleanse your eyelids. BlephEx™ may need to be performed every 6 months to maintain eyelid health.</description>
+      <image asset="blephex-device" source="crawl:blephex-treatment.html"/>
+    </service>
+    <service id="oct-testing" category="Eye health" confidence="high" source="crawl:OCT-testing.html">
+      <name source="crawl:OCT-testing.html">OCT Testing</name>
+      <summary source="inferred">Non-invasive scanning that shows the detailed layers of your retina and optic nerve.</summary>
+      <description source="crawl:OCT-testing.html">Optical Coherence Tomography is an advanced non-invasive imaging test. This test allows your optometrist to visualize detailed layers of your retina and optic nerve. It allows for early detection of conditions such as glaucoma, macula degeneration, and diabetic eye disease. This testing service is offered in our office and is recommended for all adults and seniors.</description>
+      <audience source="crawl:OCT-testing.html">Recommended for all adults and seniors</audience>
+    </service>
+    <service id="management-of-eye-disease" category="Eye health" confidence="high" source="crawl:management-of-eye-disease.html">
+      <name source="crawl:management-of-eye-disease.html">Management of Eye Disease</name>
+      <summary source="inferred">Monitoring and care for diabetic eye disease, glaucoma, macular degeneration and cataracts.</summary>
+      <description source="crawl:management-of-eye-disease.html">Diabetes can affect various organs in your body, including your eyes. Fluctuating blood sugar can weaken the blood vessels in your retina, causing them to leak, and retinal bleeding can damage its structure, causing loss of vision. A diabetic eye exam includes a dilated retinal exam, where the doctor inserts drops to dilate your pupils; after waiting 15 minutes, the retina is examined for signs of diabetic retinopathy, and an OCT test is recommended to provide a more thorough examination. Glaucoma is a disease of the optic nerve, which slowly deteriorates, typically over several years, resulting in the gradual loss of peripheral vision; untreated glaucoma can result in complete vision loss. Macula degeneration is a result of the disruption of the area of the retina which provides central vision; the two varieties are dry macula degeneration (slowly progressing) and wet macula degeneration (potentially rapidly progressing), and it can be inherited. Cataracts are a result of the clouding of the crystalline lens within the eye, so vision gradually becomes cloudy and acuity decreases; cataracts typically worsen with age and can be accelerated by conditions such as diabetes, but cataract surgery is quick and very successful in restoring vision.</description>
+    </service>
+    <service id="laser-vision-correction" category="Vision correction" confidence="high" source="crawl:laser-vision-correction.html">
+      <name source="crawl:laser-vision-correction.html">Laser Vision Correction</name>
+      <summary source="inferred">Consultations that work out whether laser surgery suits your eyes, and which procedure fits.</summary>
+      <description source="crawl:laser-vision-correction.html">Laser vision correction is a great solution for those of you frustrated with glasses or contact lenses. Laser surgery corrects those who are near-sighted, far-sighted or who have astigmatism, and there are procedures to correct presbyopia so one does not need reading glasses. There are several types of vision correction surgeries available, and you may be a good candidate for one procedure but not so great for another. Every consultation starts with a comprehensive eye exam, including a detailed history, visual needs questionnaire, measurement of eyeglass prescription and evaluation of ocular health. Through this process we can determine the most suitable laser vision correction for you. Call us to schedule your consultation today.</description>
+    </service>
+    <service id="computer-related-eye-strain" category="Eye health" confidence="high" source="crawl:computer-related-eye-strain.html">
+      <name source="crawl:computer-related-eye-strain.html">Computer Related Eye Strain</name>
+      <summary source="inferred">Advice and office lenses for the headaches and dry eyes that come with screen work.</summary>
+      <description source="crawl:computer-related-eye-strain.html">We are all spending more and more time on computers, smart phones, tablets and other devices, and this adds a lot more strain on the visual system. Our eyes are relaxed when looking at a distance, but more stressed when focusing up close, so being on a computer device for hours a day adds to eye strain and fatigue. Our blink rate also decreases when focusing on our work. Headache and dry eye are a direct result of computer related eye strain. The 20-20-20 rule is a good habit for heavy computer users: every 20 minutes, look 20 feet or further (out a window or into the distance) for a period of 20 seconds. This practice allows our eyes to reset after staring and helps reduce computer related eye strain. We have several products, such as office lenses, to help combat computer related eye strain. Call us to schedule your consultation today.</description>
+      <image asset="computer-eye-strain" source="crawl:computer-related-eye-strain.html"/>
+    </service>
+    <service id="prescription-eyewear" category="Eyewear" confidence="medium" source="crawl:services.html">
+      <name source="crawl:services.html">Prescription Eyewear and Safety Glasses</name>
+      <summary source="inferred">Frames, lenses, lens treatments and safety eyewear dispensed and fitted in the clinic.</summary>
+      <description source="crawl:services.html">We carry a wide selection of the latest fashionable prescription eyewear for adults and children, prescription and non-prescription sunglasses, and safety eyewear, along with lens treatments and designer frames. Our experienced and knowledgeable eye team will be there for your personalized fitting.</description>
+    </service>
+  </services>
+  <products>
+    <store-url confidence="high" source="crawl:index.html">https://whitbyeyecare.ottooptics.io/reorder/product/</store-url>
+    <category id="contact-lenses" confidence="high" source="crawl:contact-lenses.html">
+      <name source="crawl:contact-lenses.html">Contact Lenses</name>
+      <description source="crawl:contact-lense.html">Whether you are looking for contact lenses for those special occasions, for everyday wear, or to add a little colour to your eyes, we have your lenses. We carry all the major brands as well as custom order lenses, with no charge for exchanges of unused boxes, no charge follow-up visits for problems related to lenses purchased at our office, big savings with manufacturer rebate offers and convenient direct shipping to your home.</description>
+      <image asset="contact-lenses-product" source="crawl:contact-lenses.html"/>
+    </category>
+    <category id="sunglasses" confidence="high" source="crawl:sunglasses.html">
+      <name source="crawl:sunglasses.html">Sunglasses</name>
+      <description source="crawl:sunglasses.html">A large collection of sunglasses and eyeglasses from top brands, in prescription and non-prescription, to suit your needs and your personality.</description>
+      <image asset="sunglasses-product" source="crawl:sunglasses.html"/>
+    </category>
+    <category id="dry-eye-relief" confidence="high" source="crawl:dry-eye-relief.html">
+      <name source="crawl:dry-eye-relief.html">Dry Eye Relief</name>
+      <description source="crawl:dry-eye-relief.html">Eye drops and dry eye relief products for patients in Whitby, Oshawa and Ajax, recommended by our optometrists.</description>
+    </category>
+  </products>
+  <team>
+    <member id="dr-raniero-fernando" confidence="high" source="crawl:our-doctor.html">
+      <name confidence="high" source="crawl:our-doctor.html">Dr. Raniero Fernando</name>
+      <role source="crawl:our-doctor.html">Optometrist</role>
+      <credentials confidence="high" source="crawl:our-doctor.html">New England College of Optometry, Boston; certified in the use of ocular therapeutics</credentials>
+      <bio source="crawl:our-doctor.html">Dr. Raniero Fernando completed his undergraduate studies in molecular biology at the University of Toronto, then attended the New England College of Optometry in Boston, MA. During his studies he was a member of VOSH, providing volunteer optometric care in underserviced areas in Mexico. He is certified in the use of ocular therapeutics. Dr. Fernando has been providing optometry services in Durham Region since 2002.</bio>
+      <photo asset="dr-raniero-fernando" confidence="high" source="crawl:our-doctor.html"/>
+    </member>
+    <member id="dr-andrea-chan" confidence="high" needs-review="true" source="crawl:our-doctor.html" note="Dr. Chan has no photo on your current Our Doctors page — the space beside her biography holds a grey placeholder image left over from the website template (the file is called dummy-prod-1.jpg). We have left her photo out rather than publish the placeholder. Please send us a portrait of Dr. Chan.">
+      <name confidence="high" source="crawl:our-doctor.html">Dr. Andrea Chan</name>
+      <role source="crawl:our-doctor.html">Optometrist</role>
+      <credentials confidence="high" source="crawl:our-doctor.html">Bachelor of Science, University of Waterloo (2002); New England College of Optometry; recipient of the VSP award for clinical excellence</credentials>
+      <bio source="crawl:our-doctor.html">Dr. Andrea Chan was born and raised in the Greater Toronto area. She earned her Bachelors of Science at the University of Waterloo in 2002. She continued her education in Boston, Massachusetts at the New England College of Optometry. Upon graduation she was the recipient of the VSP award for clinical excellence. During her time there she completed several internships focusing on areas such as pediatrics and ocular disease. Dr. Chan joined the practice in 2007 and is fluent in Cantonese.</bio>
+    </member>
+    <member id="dr-hajra-naeem" confidence="high" needs-review="true" source="crawl:our-doctor.html" note="The photo shown beside Dr. Naeem's biography on your current site is a file named for Dr. Andrea Chan (Dr-Andrea-Chan.jpg), so we cannot tell whose face it is and we have left it out rather than put the wrong person next to her name. Please send us a portrait of Dr. Naeem and confirm which photo belongs to Dr. Chan. Separately, the browser tab title of your Our Doctors page still lists a 'Dr. Peter Chan', who has no profile anywhere on the page, and does not mention Dr. Naeem at all — please confirm who should appear on the new site.">
+      <name confidence="high" source="crawl:our-doctor.html">Dr. Hajra Naeem</name>
+      <role source="crawl:our-doctor.html">Optometrist</role>
+      <credentials confidence="high" source="crawl:our-doctor.html">Doctor of Optometry, University of Waterloo (2023)</credentials>
+      <bio source="crawl:our-doctor.html">Dr. Hajra Naeem completed her undergraduate studies at UOIT before receiving her Doctor of Optometry degree at the University of Waterloo in 2023. During her externships, she provided comprehensive care to patients of all ages and found a particular interest in managing Dry Eye Disease. Dr. Naeem is happy to be serving her community and can do your eye exam in English, Urdu or Hindi.</bio>
+    </member>
+    <member id="dr-sumeya-mao" confidence="high" source="crawl:our-doctor.html">
+      <name confidence="high" source="crawl:our-doctor.html">Dr. Sumeya Mao</name>
+      <role source="crawl:our-doctor.html">Optometrist</role>
+      <credentials confidence="high" source="crawl:our-doctor.html">Doctor of Optometry, University of Waterloo (2024)</credentials>
+      <bio source="crawl:our-doctor.html">Dr. Sumeya Mao studied at Ontario Tech University before earning her Doctor of Optometry degree from the University of Waterloo in 2024. She completed several internships with local optometrists, managing ocular diseases, and assisted an ophthalmologist with pre- and post-op laser treatment procedures. She is passionate about providing eye care for all ages.</bio>
+      <photo asset="dr-sumeya-mao" confidence="high" source="crawl:our-doctor.html"/>
+    </member>
+  </team>
+  <faqs>
+    <faq id="how-often-eye-exam" source="crawl:faq.html">
+      <question source="crawl:faq.html">How often should I have an eye exam?</question>
+      <answer source="crawl:faq.html">Most adults should have an eye exam every 1 to 2 years. If you have vision problems, a family history of eye disease, or certain health conditions like diabetes, more frequent exams may be recommended by your optometrist.</answer>
+    </faq>
+    <faq id="how-long-eye-exam-takes" source="crawl:faq.html">
+      <question source="crawl:faq.html">How long does an eye exam take?</question>
+      <answer source="crawl:faq.html">A standard eye exam usually takes about 30 to 60 minutes, depending on the complexity of the tests and whether you require additional evaluations, such as for contact lenses or eye conditions.</answer>
+    </faq>
+    <faq id="what-to-bring-to-eye-exam" source="crawl:faq.html">
+      <question source="crawl:faq.html">What do I need to bring with me for an eye exam?</question>
+      <answer source="crawl:faq.html">Please bring your current eyeglasses or contact lenses, a list of medications you are taking, your health card or insurance information, and any questions or concerns you have about your vision or eye health.</answer>
+    </faq>
+    <faq id="why-eye-tests-matter" source="crawl:faq.html">
+      <question source="crawl:faq.html">Why is an eye test important?</question>
+      <answer source="crawl:faq.html">Eye tests are essential not only for detecting changes in your vision but also for identifying early signs of eye conditions and systemic diseases such as diabetes, hypertension, and high cholesterol.</answer>
+    </faq>
+    <faq id="diabetes-and-eye-tests" source="crawl:faq.html">
+      <question source="crawl:faq.html">Why do I need more frequent eye tests if I’m diabetic?</question>
+      <answer source="crawl:faq.html">Diabetes increases the risk of diabetic retinopathy and other eye complications. Regular eye exams help monitor changes and allow for early intervention to prevent vision loss.</answer>
+    </faq>
+    <faq id="glasses-as-well-as-contacts" source="crawl:faq.html">
+      <question source="crawl:faq.html">Do I still need glasses if I get contact lenses?</question>
+      <answer source="crawl:faq.html">Yes, it is recommended to have a backup pair of glasses even if you wear contact lenses regularly. Glasses give your eyes a break from contacts and are useful in case of irritation or emergencies.</answer>
+    </faq>
+    <faq id="childs-first-eye-exam" source="crawl:faq.html">
+      <question source="crawl:faq.html">When should my child have their first eye exam?</question>
+      <answer source="crawl:faq.html">Children should have their first comprehensive eye exam between 6 and 9 months of age, another at 2 to 5 years old, and annually once they start school. Early detection is key to ensuring healthy visual development.</answer>
+    </faq>
+    <faq id="what-a-comprehensive-exam-includes" source="crawl:faq.html">
+      <question source="crawl:faq.html">What does a comprehensive eye examination include?</question>
+      <answer source="crawl:faq.html">A comprehensive exam evaluates vision sharpness, eye muscle function, pupil response, side vision, eye pressure, and the overall health of the eye using specialized equipment.</answer>
+    </faq>
+    <faq id="wearing-contacts-to-your-appointment" source="crawl:faq.html">
+      <question source="crawl:faq.html">Do I need to wear my contact lenses to my contact lens appointment?</question>
+      <answer source="crawl:faq.html">Yes, wearing your contact lenses to the appointment helps the optometrist assess the fit, comfort, and effectiveness of your lenses. Be sure to bring your lens case and solution as well.</answer>
+    </faq>
+    <faq id="signs-of-eye-problems" source="crawl:faq.html">
+      <question source="crawl:faq.html">What are the common signs of eye problems that I should watch out for?</question>
+      <answer source="crawl:faq.html">Watch for symptoms like blurry vision, headache, eye pain, redness, flashes of light, floaters, double vision, or sudden vision loss. Seek prompt evaluation if any of these occur.</answer>
+    </faq>
+    <faq id="reducing-computer-eye-strain" source="crawl:faq.html">
+      <question source="crawl:faq.html">How can I reduce eye strain, especially when working on a computer?</question>
+      <answer source="crawl:faq.html">Follow the 20-20-20 rule: every 20 minutes, look at something 20 feet away for 20 seconds. Adjust screen brightness, reduce glare, and ensure proper lighting and ergonomics.</answer>
+    </faq>
+    <faq id="eye-disease-risk-factors" source="crawl:faq.html">
+      <question source="crawl:faq.html">What are the risk factors for conditions such as glaucoma, cataracts, and macular degeneration, and how can I lower my risk?</question>
+      <answer source="crawl:faq.html">Risk factors include age, family history, smoking, UV exposure, and certain health conditions. Protect your eyes with sunglasses, eat a balanced diet rich in antioxidants, avoid smoking, and schedule regular eye exams for early detection.</answer>
+    </faq>
+  </faqs>
+  <social>
+    <link href="https://www.facebook.com/wecare4yourvision/" platform="facebook" source="crawl:index.html">Facebook</link>
+    <link href="https://www.instagram.com/drrfernandooptometrist/" platform="instagram" source="crawl:index.html">Instagram</link>
+    <link href="https://twitter.com/DrRFernandoOpto" platform="x" source="crawl:index.html">X (Twitter)</link>
+    <link href="https://www.pinterest.com/DrRFernandoOpto" platform="pinterest" source="crawl:index.html">Pinterest</link>
+  </social>
+  <trust>
+    <item id="optometric-services-inc" confidence="high" kind="affiliation" source="crawl:our-practice.html">
+      <label source="crawl:our-practice.html">Member of Optometric Services Inc.</label>
+      <detail source="crawl:our-practice.html">Canada’s largest network of optometrists, giving our patients a large selection of frames and lenses, excellent quality at competitive pricing, state-of-the-art examination technology and personalized follow-up.</detail>
+    </item>
+    <item id="ocular-therapeutics-certified" confidence="high" kind="certification" source="crawl:our-doctor.html">
+      <label source="crawl:our-doctor.html">Certified in the use of ocular therapeutics</label>
+      <detail source="crawl:our-doctor.html">Our optometrists are certified in the use of ocular therapeutics, which means they can prescribe medications to treat eye infections and other eye conditions.</detail>
+    </item>
+    <item id="serving-durham-since-2002" confidence="high" kind="milestone" source="crawl:our-doctor.html">
+      <label source="crawl:our-doctor.html">Providing optometry services in Durham Region since 2002</label>
+    </item>
+    <item id="areas-served" confidence="high" kind="service-area" source="crawl:index.html">
+      <label source="crawl:index.html">Serving Whitby, Oshawa, Ajax, Pickering, Scarborough and Durham Region</label>
+      <detail source="crawl:index.html">We are located in Whitby, Ontario, serving surrounding areas such as Oshawa, Ajax, Scarborough and Pickering.</detail>
+    </item>
+    <item id="designer-frame-brands" confidence="medium" kind="brands" source="crawl:index.html">
+      <label source="crawl:index.html">Designer frame and eyewear brands</label>
+      <detail needs-review="true" source="crawl:index.html" note="Your old website displayed these brands: Oakley, Guess, Coach, Boss, Vera Wang, Marciano, Fysh, Evatik, EasyClip, Jill Stuart, Barcelona and Jim. Are these still the brands you carry, and are there any to add or remove?">Oakley, Guess, Coach, Boss, Vera Wang, Marciano, Fysh, Evatik, EasyClip, Jill Stuart, Barcelona and Jim.</detail>
+    </item>
+    <item id="payment-accepted" confidence="high" kind="payment" source="crawl:index.html">
+      <label source="crawl:index.html">Cash, credit card and debit card accepted</label>
+    </item>
+  </trust>
+  <ctas>
+    <cta id="book-appointment" href="https://atlas.opto.com/v1/Router/8090/bookAppointment/?lang=En" kind="primary" source="crawl:index.html">Book Appointment</cta>
+    <cta id="call-clinic" href="tel:905-655-6236" kind="secondary" source="crawl:index.html">Call Now 905-655-6236</cta>
+    <cta id="reorder-contact-lenses" href="https://whitbyeyecare.ottooptics.io/reorder/product/" kind="secondary" source="crawl:index.html">Reorder Contact Lenses</cta>
+  </ctas>
+  <assets>
+    <asset id="logo" source="crawl:index.html" type="logo">
+      <path>assets/logo.png</path>
+      <alt source="inferred">Whitby Eye Care logo</alt>
+    </asset>
+    <asset id="favicon" source="crawl:index.html" type="favicon">
+      <path>assets/fav_icon.png</path>
+      <alt source="inferred"/>
+    </asset>
+    <asset id="hero-family-sunglasses" source="crawl:index.html" type="hero">
+      <path>assets/iStock-947926156-1600x700.jpg</path>
+      <alt source="inferred"/>
+    </asset>
+    <asset id="about-clinic" source="crawl:index.html" type="photo">
+      <path>assets/about-img.jpg</path>
+      <alt source="inferred">Photograph illustrating the Whitby Eye Care practice</alt>
+    </asset>
+    <asset id="dr-raniero-fernando" source="crawl:our-doctor.html" type="photo">
+      <path>assets/Dr-Raniero-Fernando.jpg</path>
+      <alt source="crawl:our-doctor.html">Photograph of Dr. Raniero Fernando</alt>
+    </asset>
+    <asset id="dr-sumeya-mao" source="crawl:our-doctor.html" type="photo">
+      <path>assets/dr-Sumeya.png</path>
+      <alt source="crawl:our-doctor.html">Photograph of Dr. Sumeya Mao</alt>
+    </asset>
+    <asset id="adult-senior-exam" source="crawl:adult-senior-eye-exams.html" type="photo">
+      <path>assets/adult.jpg</path>
+      <alt source="inferred">Photograph illustrating adult and senior eye exams</alt>
+    </asset>
+    <asset id="childrens-exam" source="crawl:children-eye-exams.html" type="photo">
+      <path>assets/children_exam.jpg</path>
+      <alt source="inferred">Photograph illustrating children's eye exams</alt>
+    </asset>
+    <asset id="contact-lens-fitting" source="crawl:contact-lens-fitting.html" type="photo">
+      <path>assets/lens_fitting.jpg</path>
+      <alt source="inferred">Photograph illustrating contact lens fitting</alt>
+    </asset>
+    <asset id="contact-lenses-product" source="crawl:contact-lenses.html" type="photo">
+      <path>assets/Contact-Lences.jpg</path>
+      <alt source="inferred">Photograph illustrating contact lenses</alt>
+    </asset>
+    <asset id="sunglasses-product" source="crawl:sunglasses.html" type="photo">
+      <path>assets/SunGlasses.jpg</path>
+      <alt source="inferred">Photograph illustrating sunglasses and eyewear</alt>
+    </asset>
+    <asset id="occupational-eye-exams" source="crawl:mto-and-police-eye-exams.html" type="photo">
+      <path>assets/MTO_and_police_eye_exams.jpg</path>
+      <alt source="inferred">Photograph illustrating MTO and police eye exams</alt>
+    </asset>
+    <asset id="computer-eye-strain" source="crawl:computer-related-eye-strain.html" type="photo">
+      <path>assets/computer_banner.jpg</path>
+      <alt source="inferred">Photograph illustrating computer-related eye strain</alt>
+    </asset>
+    <asset id="dry-eye-device" source="crawl:dry-eye-testing.html" type="photo">
+      <path>assets/unnamed.png</path>
+      <alt source="inferred">Photograph of the dry eye treatment device used at the clinic</alt>
+    </asset>
+    <asset id="blephex-device" source="crawl:blephex-treatment.html" type="photo">
+      <path>assets/banner2.png</path>
+      <alt source="inferred">Photograph of the BlephEx eyelid cleaning device</alt>
+    </asset>
+  </assets>
+</digest>
