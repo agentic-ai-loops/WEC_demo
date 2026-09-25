@@ -1,0 +1,51 @@
+# Task: explore the business
+
+{% if area %}
+The owner wants to explore **{{ area }}** in detail.
+{% else %}
+The owner wants to explore the whole business, one area at a time.
+{% endif %}
+
+## Steps
+
+{% if selected %}
+1. Read the area. These queries return every record with its own fields:
+
+{% for e in selected if e.list_query %}
+```graphql
+query Explore{{ e.name }} {
+  {{ e.list_query }} { {{ e.selection() }} }
+}
+```
+
+{% endfor %}
+2. Present each kind as a table. Follow references on request (e.g. a service's
+   `category`, `faqs` and `actions`); the `business_schema` prompt lists every field.
+3. Offer to drill into a single record (`<entity>(id: ...)`) or to move on to a related
+   area.
+{% else %}
+{% if area %}
+There is no area called "{{ area }}". Show the areas below and ask which one to explore.
+{% endif %}
+1. Show the areas as a table and ask where to start:
+
+| Area | What it covers | Query |
+| --- | --- | --- |
+{% for title, members in sections %}
+| {{ title }} | {{ members | map(attribute="name") | join(", ") }} | {{ members | selectattr("list_query") | map(attribute="list_query") | map("tick") | join(", ") }} |
+{% endfor %}
+
+2. For the chosen area, read its records with `{{ tools.query }}`, e.g.:
+
+```graphql
+query ExploreServices {
+  serviceCategories { id name services { id name summary hidden } }
+}
+```
+
+3. Present each kind as a table, then offer the next area in the order above.
+{% endif %}
+
+{% include "_discovery.md.j2" %}
+
+{% include "_formatting.md.j2" %}

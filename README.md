@@ -85,7 +85,8 @@ uv run client-cli mcp --list              # tools / resources / prompts
 uv run client-cli mcp --tool graphql_query --document '{ staff { name } }'
 uv run client-cli mcp --tool graphql_mutate --document 'mutation { takeSnapshot { number } }'
 uv run client-cli mcp --resource graphql://schema
-uv run client-cli mcp --prompt <name> --<arg> <value>
+uv run client-cli mcp --prompt business_overview
+uv run client-cli mcp --prompt update_business --request "Add French to Dr. Chan's languages"
 ```
 
 ## Business data inspection

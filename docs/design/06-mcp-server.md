@@ -13,6 +13,7 @@ Expose #businessdata to #owner agents over MCP — the only way owners reach the
 - In scope:
   - MCP access to the #businessdata GraphQL API (02-graphql-api).
   - The guidance given to agents (server instructions).
+  - Prompts: a reference to the business data, and task-oriented prompts.
 - Out of scope (later):
   - Tools for #design (slot bindings, templates) and #site (render, preview, deploy).
   - Authentication (one #owner per workspace).
@@ -30,6 +31,7 @@ The server is a thin gateway to the GraphQL API, not one tool per query or mutat
 | tool `graphql_schema()` | the GraphQL SDL, for clients that do not read resources |
 | resource `graphql://schema` (`text/graphql`) | the same SDL |
 | server instructions | conventions an agent cannot infer from the schema (below) |
+| prompts | a business-data reference and task-oriented prompts (*Prompts*) |
 
 Rationale:
 
@@ -71,7 +73,38 @@ The server's instructions tell the agent to read the schema, use `graphql_query`
 - files are uploaded by the owner in the web interface; `createAsset` registers them;
 - the error codes.
 
-The full text is `INSTRUCTIONS` in `intelliw/mcp/server.py`.
+The instructions are rendered from `prompts/instructions.md.j2`, built from the same
+partials as the prompts.
+
+### Prompts
+
+Prompts are Jinja2 templates in `src/intelliw/mcp/prompts/`, rendered on request with a
+context derived from the code (`intelliw.mcp.prompts.context`):
+
+- entity and field names, GraphQL types and descriptions come from the GraphQL schema,
+  whose descriptions come from the Pydantic models (docstrings and
+  `Field(description=...)`) — one source for the models, the SDL and the prompts;
+- query and mutation names come from the GraphQL schema's collection table (`SPECS`);
+- enum values and error codes (with their meanings, from the error classes' docstrings)
+  come from the code;
+- tool and resource names come from `intelliw.mcp.names`.
+
+Shared partials keep the wording identical: `_discovery` (schema tool and resource,
+query vs. mutate tools, `variables`), `_conventions` (versions, patches, soft delete,
+hidden, review items, uploads, order, error codes) and `_formatting` (below).
+
+| Prompt | Argument | Purpose |
+| --- | --- | --- |
+| `business_schema` | — | reference: how the entities fit together, one table per entity (field, type, meaning) with its query and mutation names, nested values, snapshots, enums |
+| `business_overview` | — | keep an eye on things: one dashboard query (generated to cover every collection), then counts, open questions, recent changes, version status |
+| `explore_business` | `area` (optional) | explore everything, or one area (e.g. `staff`, `services`), with generated queries selecting each entity's own fields |
+| `find_information` | `question` | answer a specific question with a targeted query, then show the data behind it |
+| `review_concerns` | — | open review items, missing photos and images, unused assets, unregistered files, hidden and trashed items, unsaved changes; fix one at a time |
+| `update_business` | `request` | confirm, snapshot, change via `graphql_mutate`, verify before/after, offer rollback; table of mutations per entity |
+
+Formatting guideline (every prompt): business data as tables with an `id` column, small
+two-column tables for single records and status, plain language, and every answer ends
+with **Next steps** (two to four options) and one **Recommended:** step.
 
 ### Future tools
 
@@ -90,9 +123,18 @@ binding #design image slots, rendering a preview — not as wrappers around sing
 - [x] A syntax error is an error result.
 - [x] The `graphql://schema` resource and `graphql_schema` tool return the same SDL.
 - [x] The instructions mention the tools, `variables`, snapshots and the error codes.
+- [x] All six prompts are listed with title and description and render with their
+      arguments.
+- [x] `business_schema` covers every entity type and every GraphQL field; every model
+      description appears in the SDL and in the prompt.
+- [x] Every GraphQL example in every rendered prompt validates against the schema; the
+      overview and concerns queries run on the sample data.
+- [x] Every prompt includes the formatting guideline and the discovery section.
 
 ## Implementation notes
 
-`src/intelliw/mcp/server.py` (`create_server`, `http_executor`, `INSTRUCTIONS`);
-tests in `tests/test_mcp.py` run the MCP server in-process with an executor that runs the
-GraphQL schema against the in-memory sample database.
+`src/intelliw/mcp/server.py` (`create_server`, `http_executor`, prompt registration),
+`src/intelliw/mcp/prompts.py` (context, `render`, `PROMPTS`), templates in
+`src/intelliw/mcp/prompts/`, names in `src/intelliw/mcp/names.py`. Tests:
+`tests/test_mcp.py` (tools, in-process against the in-memory sample database) and
+`tests/test_mcp_prompts.py` (prompts, sync with the schema, validity of examples).

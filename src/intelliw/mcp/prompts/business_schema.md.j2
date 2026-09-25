@@ -1,0 +1,86 @@
+# The business data: a reference
+
+Use this reference to explain the owner's business data and to find the right query or
+mutation. It is generated from the live API, so names and descriptions are current.
+
+## How it fits together
+
+- The **business** record holds the identity: name, tagline, description, logo, service
+  areas, payment methods.
+- Customers reach the business through **contact points** (phone, email, booking and store
+  links) and visit its **locations**, each with opening hours.
+- The business offers **services**, grouped into **service categories**, and sells
+  **product categories**.
+- The **team** (staff members), **FAQs**, **social links** and **affiliations** tell
+  customers who the business is.
+- **Customer actions** are the things customers can do (book, call, buy), each through a
+  contact point.
+- **Assets** are the business's images, used as logos and photos.
+- **Review items** are questions for the owner about specific data.
+- Everything is versioned: one editable active version, plus read-only **snapshots**.
+
+References between records are followed in queries: e.g. a service's `category` returns
+the category record, and a category's `services` lists its services.
+
+{% for title, members in sections %}
+## {{ title }}
+
+{% for e in members %}
+### {{ e.name }}
+
+{{ e.description }}
+
+{% if e.list_query or e.by_id_query %}
+Query: {{ ([e.list_query] if e.list_query else []) | map("tick") | join(", ") }}{{ ", " if e.list_query and e.by_id_query else "" }}{{ ("`" ~ e.by_id_query ~ "(id: ...)`") if e.by_id_query else "" }}{{ (" · Change: " ~ (e.mutations | map("tick") | join(", "))) if e.mutations else "" }}
+
+{% endif %}
+| Field | Type | Meaning |
+| --- | --- | --- |
+{% for f in e.fields %}
+| `{{ f.name }}` | `{{ f.type }}` | {{ f.description | cell }} |
+{% endfor %}
+
+{% endfor %}
+{% endfor %}
+## Nested values
+
+These appear inside other records (e.g. a location's `address` and `hours`).
+
+{% for v in value_types %}
+### {{ v.name }}
+
+{{ v.description }}
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+{% for f in v.fields %}
+| `{{ f.name }}` | `{{ f.type }}` | {{ f.description | cell }} |
+{% endfor %}
+
+{% endfor %}
+## Snapshots
+
+{% for v in version_types %}
+{{ v.description }} List them with `snapshots`; see where the active version stands with
+`activeVersion`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+{% for f in v.fields %}
+| `{{ f.name }}` | `{{ f.type }}` | {{ f.description | cell }} |
+{% endfor %}
+
+{% endfor %}
+## Fixed choices (enums)
+
+| Enum | Meaning | Values |
+| --- | --- | --- |
+{% for en in enums %}
+| `{{ en.name }}` | {{ en.description | cell }} | {{ en["values"] | map("tick") | join(", ") }} |
+{% endfor %}
+
+{% include "_discovery.md.j2" %}
+
+{% include "_conventions.md.j2" %}
+
+{% include "_formatting.md.j2" %}

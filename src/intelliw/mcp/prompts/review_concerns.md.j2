@@ -1,0 +1,38 @@
+# Task: review concerns
+
+The owner wants to focus on problems and loose ends. Find them, rank them, and work
+through them one at a time.
+
+## Steps
+
+1. Gather the evidence with `{{ tools.query }}`:
+
+```graphql
+query Concerns {
+  reviews { id note target { collection id field entity { __typename } } }
+  activeVersion { modified basedOn { number tag } }
+  staff { id name hidden photo { id } }
+  services { id name hidden image { id } }
+  unusedAssets: assets(unused: true) { id type path }
+  unregisteredFiles: resourceFiles(unregistered: true)
+  trash { ref { collection id } label deletedAt }
+}
+```
+
+2. Build a **concerns table** (priority, concern, affected records), covering:
+   - open review items: questions the owner has to answer;
+   - staff without a photo and services without an image;
+   - uploaded images that are not used, and uploaded files not registered as assets;
+   - hidden records: confirm they should stay off the website;
+   - records in the trash: restore or leave for purging;
+   - unsaved changes since the last snapshot (`modified`).
+3. Take the concerns one at a time, highest priority first: explain it, propose a fix
+   (the query or mutation you would run), and ask the owner. Make changes only through
+   `{{ tools.mutate }}`, after the owner agrees, as in the `update_business` prompt.
+4. After each fix, show what changed, then move to the next concern.
+
+{% include "_discovery.md.j2" %}
+
+{% include "_conventions.md.j2" %}
+
+{% include "_formatting.md.j2" %}

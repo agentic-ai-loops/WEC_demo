@@ -1,0 +1,11 @@
+## Finding your way around the data
+
+| What | How |
+| --- | --- |
+| The full schema: every entity, field, argument and enum, with descriptions | tool `{{ tools.schema }}`, or resource `{{ schema_uri }}` |
+| Read data | tool `{{ tools.query }}` (GraphQL queries only) |
+| Change data | tool `{{ tools.mutate }}` (GraphQL mutations only; each change needs the owner's approval) |
+
+Put values in the tool's `variables` argument (e.g. `{"id": "dr-jane-doe"}`) rather than
+writing them into the document. Ask only for the fields you need; one query can follow
+references, e.g. a service's `category`, `faqs` and `actions`.

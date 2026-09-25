@@ -2,7 +2,8 @@
 
 A thin gateway rather than one tool per operation: agents read the schema and send
 GraphQL documents. Reads and writes are separate tools so MCP clients can approve reads
-freely and ask the owner before writes; the split is enforced here, not trusted.
+freely and ask the owner before writes; the split is enforced here, not trusted. Prompts
+and the server instructions are rendered from templates (`intelliw.mcp.prompts`).
 """
 
 import json
@@ -18,35 +19,11 @@ from mcp.types import CallToolResult, TextContent, ToolAnnotations
 
 from intelliw.config import Settings
 from intelliw.graphql.schema import schema
+from intelliw.mcp import prompts
+from intelliw.mcp.names import SCHEMA_URI, TOOL_MUTATE, TOOL_QUERY, TOOL_SCHEMA
 
 # (document, variables) -> GraphQL response as JSON ({"data": ..., "errors": [...]})
 Executor = Callable[[str, dict[str, Any] | None], Awaitable[dict[str, Any]]]
-
-SCHEMA_URI = "graphql://schema"
-
-INSTRUCTIONS = """\
-Manage a small business's web presence. The business data is served by a GraphQL API:
-read the schema (resource graphql://schema, or the graphql_schema tool), then use
-graphql_query for reads and graphql_mutate for changes. Pass values in `variables`
-rather than writing them into the document.
-
-Conventions:
-- There is one editable active version and read-only numbered snapshots. Queries read the
-  active version unless given `version: <n>` or `snapshot: "<tag>"`. Mutations always
-  change the active version.
-- Before a batch of changes, `takeSnapshot(tag: ...)`; to undo, `activateVersion(...)`
-  (unsaved changes are kept in an automatic snapshot).
-- Updates are patches: an omitted field is unchanged; an explicit null clears it.
-- Deleting marks an entity deleted; `trash` lists deleted entities and
-  `restore<Entity>(id)` brings one back. `hidden: true` keeps an entity but leaves it off
-  the site.
-- Review items (`reviews`) are open questions for the owner; ask the owner, then
-  `resolveReview` / `dismissReview`.
-- Files (images) are uploaded by the owner in the web interface; `createAsset` only
-  registers an uploaded file, then reference it (e.g. a staff member's `photo`).
-- Errors carry `extensions.code`: NOT_FOUND, VALIDATION, IN_USE (with `usedBy`),
-  CONFLICT, STALE_ORDER, READ_ONLY.
-"""
 
 
 def http_executor(settings: Settings) -> Executor:
@@ -78,7 +55,7 @@ def schema_sdl() -> str:
 
 def create_server(settings: Settings, execute: Executor | None = None) -> MCPServer:
     execute = execute or http_executor(settings)
-    server = MCPServer(name="intelliw", instructions=INSTRUCTIONS)
+    server = MCPServer(name="intelliw", instructions=prompts.render("instructions"))
 
     async def run(document: str, variables: dict[str, Any] | None) -> CallToolResult:
         result = await execute(document, variables)
@@ -89,6 +66,7 @@ def create_server(settings: Settings, execute: Executor | None = None) -> MCPSer
         )
 
     @server.tool(
+        name=TOOL_QUERY,
         title="Read business data (GraphQL query)",
         annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
     )
@@ -104,6 +82,7 @@ def create_server(settings: Settings, execute: Executor | None = None) -> MCPSer
         return await run(document, variables)
 
     @server.tool(
+        name=TOOL_MUTATE,
         title="Change business data (GraphQL mutation)",
         annotations=ToolAnnotations(
             read_only_hint=False,
@@ -125,6 +104,7 @@ def create_server(settings: Settings, execute: Executor | None = None) -> MCPSer
         return await run(document, variables)
 
     @server.tool(
+        name=TOOL_SCHEMA,
         title="GraphQL schema of the business data",
         annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
     )
@@ -142,7 +122,40 @@ def create_server(settings: Settings, execute: Executor | None = None) -> MCPSer
     def graphql_schema_resource() -> str:
         return schema_sdl()
 
+    _register_prompts(server)
     return server
+
+
+def _register_prompts(server: MCPServer) -> None:
+    """The prompts of `intelliw.mcp.prompts`, rendered from their templates on request."""
+
+    def prompt(name: str) -> Any:
+        title, description = prompts.PROMPTS[name]
+        return server.prompt(name=name, title=title, description=description)
+
+    @prompt("business_schema")
+    def business_schema() -> str:
+        return prompts.render("business_schema")
+
+    @prompt("business_overview")
+    def business_overview() -> str:
+        return prompts.render("business_overview")
+
+    @prompt("explore_business")
+    def explore_business(area: str = "") -> str:
+        return prompts.render("explore_business", area=area, selected=prompts.select_area(area))
+
+    @prompt("find_information")
+    def find_information(question: str) -> str:
+        return prompts.render("find_information", question=question)
+
+    @prompt("review_concerns")
+    def review_concerns() -> str:
+        return prompts.render("review_concerns")
+
+    @prompt("update_business")
+    def update_business(request: str) -> str:
+        return prompts.render("update_business", request=request)
 
 
 def uvicorn_server(settings: Settings) -> uvicorn.Server:

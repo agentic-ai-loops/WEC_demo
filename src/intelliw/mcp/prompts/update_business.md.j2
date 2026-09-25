@@ -1,0 +1,54 @@
+# Task: update the business
+
+The owner wants to make a change: **{{ request }}**
+
+## Steps
+
+1. **Understand the change.** Find the records involved with `{{ tools.query }}` and
+   show their current values as a table. If the request is ambiguous, ask.
+2. **Confirm.** Describe exactly what will change (record, field, old value, new value)
+   and get the owner's go-ahead.
+3. **Save a restore point** before a batch of changes, with a short tag:
+
+```graphql
+mutation SaveRestorePoint($tag: String) {
+  takeSnapshot(tag: $tag) { number tag }
+}
+```
+
+4. **Make the change** with `{{ tools.mutate }}`, passing ids and values in `variables`.
+   Updates are patches: send only the fields that change. For example:
+
+```graphql
+mutation UpdateStaffMember($id: ID!, $patch: StaffMemberPatch!) {
+  updateStaffMember(id: $id, patch: $patch) { id name role updatedAt }
+}
+```
+
+5. **Verify.** Read the records again and show before and after side by side.
+6. **Offer to undo.** Tell the owner the change can be rolled back to the restore point:
+
+```graphql
+mutation Undo($tag: String) {
+  activateVersion(snapshot: $tag) { activeVersion { basedOn { number tag } } autoSnapshot { number } }
+}
+```
+
+If a mutation fails, explain the error in plain terms (see the codes below) and suggest
+a fix; nothing is changed by a failed mutation.
+
+## Which mutation changes what
+
+| Record | Mutations |
+| --- | --- |
+{% for title, members in sections %}
+{% for e in members if e.mutations %}
+| {{ e.name }} | {{ e.mutations | map("tick") | join(", ") }} |
+{% endfor %}
+{% endfor %}
+
+{% include "_discovery.md.j2" %}
+
+{% include "_conventions.md.j2" %}
+
+{% include "_formatting.md.j2" %}

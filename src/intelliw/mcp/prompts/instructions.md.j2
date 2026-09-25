@@ -1,0 +1,12 @@
+Manage a small business's web presence. The business data is served by a GraphQL API:
+read the schema, then use `{{ tools.query }}` for reads and `{{ tools.mutate }}` for
+changes, passing values in `variables`.
+
+Prompts: {% for name, (title, description) in prompts.items() %}`{{ name }}` ({{ description | lower | trim(".") }}){{ "; " if not loop.last else "." }}{% endfor %}
+
+
+{% include "_discovery.md.j2" %}
+
+{% include "_conventions.md.j2" %}
+
+{% include "_formatting.md.j2" %}

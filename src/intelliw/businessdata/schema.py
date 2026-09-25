@@ -12,7 +12,7 @@ Entities carry no version: the version is context (a document, a query argument)
 
 from datetime import UTC, datetime, time
 from enum import StrEnum
-from typing import Annotated, Literal, Self
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import (
     AfterValidator,
@@ -43,25 +43,32 @@ class Model(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
 
+def _d(description: str, default: Any = ..., **kwargs: Any) -> Any:
+    """A field with a description (the single source for GraphQL and MCP prompt docs)."""
+    return Field(default, description=description, **kwargs)
+
+
 class Timestamped(Model):
-    created_at: UtcDatetime  # UTC; server-set (rule 11)
-    updated_at: UtcDatetime  # UTC; server-set (rule 11)
+    created_at: UtcDatetime = _d("When this was created (UTC).")
+    updated_at: UtcDatetime = _d("When this last changed (UTC).")
 
 
 class Entity(Timestamped):
-    id: Slug  # immutable; unique per collection per version (rule 6)
-    position: int = Field(ge=0)  # 0-based, contiguous per collection (rule 7)
-    deleted: bool = False  # marked for purge (rule 12)
+    id: Slug = _d("Permanent identifier (a slug such as `dr-jane-doe`); never changes.")
+    position: int = _d("Place in the owner's display order (0 = first).", ge=0)
+    deleted: bool = _d("Marked as deleted; restorable until purged.", False)
 
 
 class Hideable(Entity):
-    hidden: bool = False  # not rendered (rule 10)
+    hidden: bool = _d("Kept on record but left off the website.", False)
 
 
 # ---- enums -----------------------------------------------------------------
 
 
 class ContactKind(StrEnum):
+    """What kind of contact channel a contact point is."""
+
     phone = "phone"
     email = "email"
     booking = "booking"
@@ -70,6 +77,8 @@ class ContactKind(StrEnum):
 
 
 class Weekday(StrEnum):
+    """Day of the week."""
+
     monday = "monday"
     tuesday = "tuesday"
     wednesday = "wednesday"
@@ -80,6 +89,8 @@ class Weekday(StrEnum):
 
 
 class PaymentMethod(StrEnum):
+    """A way customers can pay."""
+
     cash = "cash"
     credit = "credit"
     debit = "debit"
@@ -89,6 +100,8 @@ class PaymentMethod(StrEnum):
 
 
 class ActionType(StrEnum):
+    """What a customer action lets a customer do."""
+
     book = "book"
     call = "call"
     email = "email"
@@ -97,12 +110,16 @@ class ActionType(StrEnum):
 
 
 class AssetType(StrEnum):
+    """What an image is used as."""
+
     logo = "logo"
     favicon = "favicon"
     photo = "photo"
 
 
 class SocialPlatform(StrEnum):
+    """A social media platform."""
+
     facebook = "facebook"
     instagram = "instagram"
     x = "x"
@@ -113,6 +130,8 @@ class SocialPlatform(StrEnum):
 
 
 class ReviewStatus(StrEnum):
+    """Where a review item stands."""
+
     open = "open"
     resolved = "resolved"
     dismissed = "dismissed"
@@ -132,24 +151,30 @@ ACTION_CHANNEL_KINDS: dict[ActionType, frozenset[ContactKind]] = {
 
 
 class Address(Model):
-    street: str
-    city: str
-    region: str  # ISO 3166-2 subdivision, e.g. "ON"
-    postal_code: str
-    country: str = "CA"  # ISO 3166-1 alpha-2
+    """A postal address."""
+
+    street: str = _d("Street address, including unit.")
+    city: str = _d("City or town.")
+    region: str = _d("Province or state code, e.g. `ON`.")
+    postal_code: str = _d("Postal or ZIP code.")
+    country: str = _d("Two-letter country code, e.g. `CA`.", "CA")
 
 
 class GeoPoint(Model):
-    lat: float
-    lng: float
+    """A map position."""
+
+    lat: float = _d("Latitude.")
+    lng: float = _d("Longitude.")
 
 
 class OpeningHours(Model):
-    day: Weekday
-    seq: int = Field(default=0, ge=0)  # interval number within the day (split shifts)
-    open: time | None = None
-    close: time | None = None
-    closed: bool = False
+    """Opening hours for one day; a day with a break has one entry per interval."""
+
+    day: Weekday = _d("Day of the week.")
+    seq: int = _d("Interval number within the day (0, 1, ... for split shifts).", 0, ge=0)
+    open: time | None = _d("Opening time (empty when closed).", None)
+    close: time | None = _d("Closing time (empty when closed).", None)
+    closed: bool = _d("Closed all day.", False)
 
     @model_validator(mode="after")
     def _check_times(self) -> Self:
@@ -167,24 +192,28 @@ class OpeningHours(Model):
 
 
 class Business(Timestamped):
-    name: str
-    legal_name: str | None = None
-    tagline: str = ""
-    category: str = ""
-    description: Markdown = ""
-    logo: Slug | None = None  # -> Asset.id (type logo)
-    favicon: Slug | None = None  # -> Asset.id (type favicon)
-    brands: list[str] = []
-    service_areas: list[str] = []
-    serving_since: int | None = None  # year
-    payment_methods: list[PaymentMethod] = []
+    """The business itself: its name, identity and the facts shown across the website."""
+
+    name: str = _d("Name customers know the business by.")
+    legal_name: str | None = _d("Official or registered name, if different.", None)
+    tagline: str = _d("Short slogan.", "")
+    category: str = _d("Kind of business, e.g. `Independent optometry clinic`.", "")
+    description: Markdown = _d("About the business (Markdown).", "")
+    logo: Slug | None = _d("The business logo (an asset of type logo).", None)
+    favicon: Slug | None = _d("The small browser-tab icon (an asset of type favicon).", None)
+    brands: list[str] = _d("Brands the business carries.", [])
+    service_areas: list[str] = _d("Towns and regions the business serves.", [])
+    serving_since: int | None = _d("Year the business started serving its area.", None)
+    payment_methods: list[PaymentMethod] = _d("Payment methods accepted.", [])
 
 
 class ContactPoint(Hideable):
-    kind: ContactKind
-    label: str = ""
-    value: str  # phone number, email address or URL
-    primary: bool = False  # at most one primary non-deleted per kind
+    """A way to reach the business: a phone number, email address, booking or store link."""
+
+    kind: ContactKind = _d("Phone, email, booking link, online store or website.")
+    label: str = _d("Short label, e.g. `Main` or `Appointments`.", "")
+    value: str = _d("The phone number, email address or URL.")
+    primary: bool = _d("The main contact point of its kind (at most one per kind).", False)
 
     @property
     def href(self) -> str:
@@ -196,12 +225,14 @@ class ContactPoint(Hideable):
 
 
 class Location(Hideable):
-    name: str
-    address: Address
-    geo: GeoPoint | None = None
-    map_url: HttpUrl | None = None
-    phone: Slug | None = None  # -> ContactPoint.id (kind phone)
-    hours: list[OpeningHours] = []
+    """A place where the business serves customers, with its address and opening hours."""
+
+    name: str = _d("Name of the location.")
+    address: Address = _d("Postal address.")
+    geo: GeoPoint | None = _d("Map position.", None)
+    map_url: HttpUrl | None = _d("Link to the location on a map.", None)
+    phone: Slug | None = _d("The location's phone number (a phone contact point).", None)
+    hours: list[OpeningHours] = _d("Weekly opening hours.", [])
 
     @model_validator(mode="after")
     def _check_hours(self) -> Self:
@@ -223,63 +254,81 @@ class Location(Hideable):
 
 
 class ServiceCategory(Hideable):
-    name: str
+    """A group of related services, e.g. `Eye exams`."""
+
+    name: str = _d("Name of the category.")
 
 
 class Service(Hideable):
-    category: Slug  # -> ServiceCategory.id
-    name: str
-    summary: str = ""
-    description: Markdown = ""
-    audience: str | None = None
-    image: Slug | None = None  # -> Asset.id; a picture of the business
+    """A service the business offers customers."""
+
+    category: Slug = _d("The category this service belongs to.")
+    name: str = _d("Name of the service.")
+    summary: str = _d("One-sentence summary.", "")
+    description: Markdown = _d("Full description (Markdown).", "")
+    audience: str | None = _d("Who the service is for, e.g. `Children under 19`.", None)
+    image: Slug | None = _d("A photo of this service at the business (an asset).", None)
 
 
 class ProductCategory(Hideable):
-    name: str
-    description: Markdown = ""
-    image: Slug | None = None  # -> Asset.id; a picture of products carried
+    """A group of products the business sells, e.g. `Sunglasses`."""
+
+    name: str = _d("Name of the product category.")
+    description: Markdown = _d("Description (Markdown).", "")
+    image: Slug | None = _d("A photo of the products the business carries (an asset).", None)
 
 
 class StaffMember(Hideable):
-    name: str
-    role: str
-    credentials: str = ""
-    bio: Markdown = ""
-    languages: list[str] = []  # BCP 47 tags
-    photo: Slug | None = None  # -> Asset.id
+    """A person on the team, e.g. an optometrist."""
+
+    name: str = _d("Full name, e.g. `Dr. Jane Doe`.")
+    role: str = _d("Job title, e.g. `Optometrist`.")
+    credentials: str = _d("Degrees and certifications.", "")
+    bio: Markdown = _d("Biography (Markdown).", "")
+    languages: list[str] = _d("Languages spoken, as language codes such as `en`, `yue`.", [])
+    photo: Slug | None = _d("Portrait of the staff member (an asset).", None)
 
 
 class Faq(Hideable):
-    question: str
-    answer: Markdown
-    services: list[Slug] = []  # -> Service.id
+    """A frequently asked question and its answer."""
+
+    question: str = _d("The question, as a customer would ask it.")
+    answer: Markdown = _d("The answer (Markdown).")
+    services: list[Slug] = _d("Services this question is about.", [])
 
 
 class SocialLink(Hideable):
-    platform: SocialPlatform
-    url: HttpUrl
-    label: str = ""
+    """A link to the business on a social media platform."""
+
+    platform: SocialPlatform = _d("The social media platform.")
+    url: HttpUrl = _d("Link to the business's page.")
+    label: str = _d("Link text.", "")
 
 
 class Affiliation(Hideable):
-    name: str
-    description: Markdown = ""
-    url: HttpUrl | None = None
-    logo: Slug | None = None  # -> Asset.id
+    """An organisation the business belongs to or is certified by."""
+
+    name: str = _d("Name of the organisation.")
+    description: Markdown = _d("What the membership means for customers (Markdown).", "")
+    url: HttpUrl | None = _d("The organisation's website.", None)
+    logo: Slug | None = _d("The organisation's logo (an asset).", None)
 
 
 class CustomerAction(Hideable):
-    type: ActionType
-    label: str  # wording only
-    channel: Slug  # -> ContactPoint.id
-    services: list[Slug] = []  # -> Service.id
+    """Something a customer can do, like booking or calling, through a contact point."""
+
+    type: ActionType = _d("What the customer does: book, call, email, buy or visit.")
+    label: str = _d("Button wording, e.g. `Book Appointment`.")
+    channel: Slug = _d("The contact point the action uses (booking link, phone, ...).")
+    services: list[Slug] = _d("Services the action applies to.", [])
 
 
 class Asset(Entity):
-    type: AssetType
-    path: str  # relative to businessdata/resources/; file is immutable
-    alt: str = ""
+    """An image of the business (logo, favicon or photo), uploaded by the owner."""
+
+    type: AssetType = _d("What the image is used as: logo, favicon or photo.")
+    path: str = _d("File name of the uploaded image.")
+    alt: str = _d("Text description of the image, for accessibility.", "")
 
 
 # ---- review -----------------------------------------------------------------
@@ -304,9 +353,9 @@ Collection = Literal[
 class EntityRef(Model):
     """An entity, or one field of it: review targets, cleared references, asset usage."""
 
-    collection: Collection
-    id: Slug | None = None  # None only for collection == "business"
-    field: str | None = None  # GraphQL (camelCase) field name; None = whole entity
+    collection: Collection = _d("The kind of entity.")
+    id: Slug | None = _d("The entity's id (empty for the business itself).", None)
+    field: str | None = _d("One field of the entity (empty = the whole entity).", None)
 
     @model_validator(mode="after")
     def _check_id(self) -> Self:
@@ -319,22 +368,30 @@ ReviewTarget = EntityRef
 
 
 class ReviewItem(Entity):
-    target: ReviewTarget
-    note: str
-    status: ReviewStatus = ReviewStatus.open
-    resolution: str | None = None
+    """A question for the owner to check or decide, about one entity or field."""
+
+    target: ReviewTarget = _d("What the question is about.")
+    note: str = _d("The question, in plain language.")
+    status: ReviewStatus = _d("Open, resolved or dismissed.", ReviewStatus.open)
+    resolution: str | None = _d("The owner's answer or reason for dismissal.", None)
 
 
 # ---- versions ---------------------------------------------------------------
 
 
 class Version(Model):
-    """A read-only snapshot."""
+    """A read-only snapshot of the business data, for rollback."""
 
-    number: int = Field(ge=1)
-    tag: str | None = Field(default=None, min_length=1, max_length=100, pattern=r"^\S(.*\S)?$")
-    parent: int | None = None  # snapshot the active version was based on; None for 1
-    created_at: UtcDatetime
+    number: int = _d("Snapshot number (1, 2, ...).", ge=1)
+    tag: str | None = _d(
+        "Optional name of the snapshot.",
+        None,
+        min_length=1,
+        max_length=100,
+        pattern=r"^\S(.*\S)?$",
+    )
+    parent: int | None = _d("The snapshot the active version was based on when taken.", None)
+    created_at: UtcDatetime = _d("When the snapshot was taken (UTC).")
 
 
 class VersionIndex(Model):

@@ -12,6 +12,7 @@ from enum import Enum
 from typing import Annotated, Any, get_args
 
 import strawberry
+from pydantic import BaseModel
 from strawberry.experimental.pydantic import type as pydantic_type
 
 from intelliw.businessdata import queries
@@ -28,12 +29,18 @@ for _enum in (
     m.SocialPlatform,
     m.ReviewStatus,
 ):
-    strawberry.enum(_enum)
+    strawberry.enum(_enum, description=_enum.__doc__)
 
 Collection = strawberry.enum(
     Enum("Collection", {name: name for name in get_args(m.Collection)}),  # type: ignore[misc]
     name="Collection",
+    description="A kind of entity, as named in review targets and references.",
 )
+
+
+def _doc(model: type[BaseModel], field: str) -> str | None:
+    """The description of a model field: reference fields reuse it for the resolved entity."""
+    return model.model_fields[field].description
 
 
 def _context(info: strawberry.Info) -> Any:
@@ -52,17 +59,17 @@ def _version_field(v: int) -> int | None:
 # ---- nested values -------------------------------------------------------------------
 
 
-@pydantic_type(model=m.Address, all_fields=True)
+@pydantic_type(model=m.Address, all_fields=True, description=m.Address.__doc__)
 class Address:
     pass
 
 
-@pydantic_type(model=m.GeoPoint, all_fields=True)
+@pydantic_type(model=m.GeoPoint, all_fields=True, description=m.GeoPoint.__doc__)
 class GeoPoint:
     pass
 
 
-@pydantic_type(model=m.OpeningHours, all_fields=True)
+@pydantic_type(model=m.OpeningHours, all_fields=True, description=m.OpeningHours.__doc__)
 class OpeningHours:
     pass
 
@@ -109,7 +116,7 @@ async def _reviews(info: strawberry.Info, v: int, collection: str, id: str | Non
     return [wrap(r, v) for r in found]
 
 
-@pydantic_type(model=m.Asset)
+@pydantic_type(model=m.Asset, description=m.Asset.__doc__)
 class Asset(_Wrapped):
     id: strawberry.ID
     type: strawberry.auto
@@ -124,7 +131,7 @@ class Asset(_Wrapped):
         return [EntityRef.of(r) for r in found]
 
 
-@pydantic_type(model=m.Business)
+@pydantic_type(model=m.Business, description=m.Business.__doc__)
 class Business(_Wrapped):
     name: strawberry.auto
     legal_name: strawberry.auto
@@ -138,20 +145,20 @@ class Business(_Wrapped):
     created_at: strawberry.auto
     updated_at: strawberry.auto
 
-    @strawberry.field
+    @strawberry.field(description=_doc(m.Business, "logo"))
     async def logo(self, info: strawberry.Info) -> Asset | None:
         return await _load(info, m.Asset, self.v, self.model.logo)
 
-    @strawberry.field
+    @strawberry.field(description=_doc(m.Business, "favicon"))
     async def favicon(self, info: strawberry.Info) -> Asset | None:
         return await _load(info, m.Asset, self.v, self.model.favicon)
 
-    @strawberry.field
+    @strawberry.field(description="Review items (questions for the owner) about this.")
     async def reviews(self, info: strawberry.Info) -> list[_lazy("ReviewItem")]:
         return await _reviews(info, self.v, "business", None)
 
 
-@pydantic_type(model=m.ContactPoint)
+@pydantic_type(model=m.ContactPoint, description=m.ContactPoint.__doc__)
 class ContactPoint(_Wrapped):
     id: strawberry.ID
     kind: strawberry.auto
@@ -162,7 +169,7 @@ class ContactPoint(_Wrapped):
     created_at: strawberry.auto
     updated_at: strawberry.auto
 
-    @strawberry.field(description="tel:, mailto: or URL")
+    @strawberry.field(description="Link for the contact point: tel:, mailto: or its URL.")
     def href(self) -> str:
         return self.model.href
 
@@ -171,12 +178,12 @@ class ContactPoint(_Wrapped):
         found = await _context(info).loaders.actions_by_channel.load((self.v, self.model.id))
         return [wrap(a, self.v) for a in found]
 
-    @strawberry.field
+    @strawberry.field(description="Review items (questions for the owner) about this.")
     async def reviews(self, info: strawberry.Info) -> list[_lazy("ReviewItem")]:
         return await _reviews(info, self.v, "contacts", self.model.id)
 
 
-@pydantic_type(model=m.Location)
+@pydantic_type(model=m.Location, description=m.Location.__doc__)
 class Location(_Wrapped):
     id: strawberry.ID
     name: strawberry.auto
@@ -188,16 +195,16 @@ class Location(_Wrapped):
     created_at: strawberry.auto
     updated_at: strawberry.auto
 
-    @strawberry.field
+    @strawberry.field(description=_doc(m.Location, "phone"))
     async def phone(self, info: strawberry.Info) -> ContactPoint | None:
         return await _load(info, m.ContactPoint, self.v, self.model.phone)
 
-    @strawberry.field
+    @strawberry.field(description="Review items (questions for the owner) about this.")
     async def reviews(self, info: strawberry.Info) -> list[_lazy("ReviewItem")]:
         return await _reviews(info, self.v, "locations", self.model.id)
 
 
-@pydantic_type(model=m.ServiceCategory)
+@pydantic_type(model=m.ServiceCategory, description=m.ServiceCategory.__doc__)
 class ServiceCategory(_Wrapped):
     id: strawberry.ID
     name: strawberry.auto
@@ -205,13 +212,13 @@ class ServiceCategory(_Wrapped):
     created_at: strawberry.auto
     updated_at: strawberry.auto
 
-    @strawberry.field
+    @strawberry.field(description="Services in this category.")
     async def services(self, info: strawberry.Info) -> list[_lazy("Service")]:
         found = await _context(info).loaders.services_by_category.load((self.v, self.model.id))
         return [wrap(s, self.v) for s in found]
 
 
-@pydantic_type(model=m.Service)
+@pydantic_type(model=m.Service, description=m.Service.__doc__)
 class Service(_Wrapped):
     id: strawberry.ID
     name: strawberry.auto
@@ -222,30 +229,30 @@ class Service(_Wrapped):
     created_at: strawberry.auto
     updated_at: strawberry.auto
 
-    @strawberry.field
+    @strawberry.field(description=_doc(m.Service, "category"))
     async def category(self, info: strawberry.Info) -> ServiceCategory:
         return await _load(info, m.ServiceCategory, self.v, self.model.category)
 
-    @strawberry.field
+    @strawberry.field(description=_doc(m.Service, "image"))
     async def image(self, info: strawberry.Info) -> Asset | None:
         return await _load(info, m.Asset, self.v, self.model.image)
 
-    @strawberry.field
+    @strawberry.field(description="FAQs about this service.")
     async def faqs(self, info: strawberry.Info) -> list[_lazy("Faq")]:
         found = await _context(info).loaders.faqs_by_service.load((self.v, self.model.id))
         return [wrap(f, self.v) for f in found]
 
-    @strawberry.field
+    @strawberry.field(description="Customer actions that apply to this service.")
     async def actions(self, info: strawberry.Info) -> list[_lazy("CustomerAction")]:
         found = await _context(info).loaders.actions_by_service.load((self.v, self.model.id))
         return [wrap(a, self.v) for a in found]
 
-    @strawberry.field
+    @strawberry.field(description="Review items (questions for the owner) about this.")
     async def reviews(self, info: strawberry.Info) -> list[_lazy("ReviewItem")]:
         return await _reviews(info, self.v, "services", self.model.id)
 
 
-@pydantic_type(model=m.ProductCategory)
+@pydantic_type(model=m.ProductCategory, description=m.ProductCategory.__doc__)
 class ProductCategory(_Wrapped):
     id: strawberry.ID
     name: strawberry.auto
@@ -254,16 +261,16 @@ class ProductCategory(_Wrapped):
     created_at: strawberry.auto
     updated_at: strawberry.auto
 
-    @strawberry.field
+    @strawberry.field(description=_doc(m.ProductCategory, "image"))
     async def image(self, info: strawberry.Info) -> Asset | None:
         return await _load(info, m.Asset, self.v, self.model.image)
 
-    @strawberry.field
+    @strawberry.field(description="Review items (questions for the owner) about this.")
     async def reviews(self, info: strawberry.Info) -> list[_lazy("ReviewItem")]:
         return await _reviews(info, self.v, "product_categories", self.model.id)
 
 
-@pydantic_type(model=m.StaffMember)
+@pydantic_type(model=m.StaffMember, description=m.StaffMember.__doc__)
 class StaffMember(_Wrapped):
     id: strawberry.ID
     name: strawberry.auto
@@ -275,16 +282,16 @@ class StaffMember(_Wrapped):
     created_at: strawberry.auto
     updated_at: strawberry.auto
 
-    @strawberry.field
+    @strawberry.field(description=_doc(m.StaffMember, "photo"))
     async def photo(self, info: strawberry.Info) -> Asset | None:
         return await _load(info, m.Asset, self.v, self.model.photo)
 
-    @strawberry.field
+    @strawberry.field(description="Review items (questions for the owner) about this.")
     async def reviews(self, info: strawberry.Info) -> list[_lazy("ReviewItem")]:
         return await _reviews(info, self.v, "staff", self.model.id)
 
 
-@pydantic_type(model=m.Faq)
+@pydantic_type(model=m.Faq, description=m.Faq.__doc__)
 class Faq(_Wrapped):
     id: strawberry.ID
     question: strawberry.auto
@@ -293,12 +300,12 @@ class Faq(_Wrapped):
     created_at: strawberry.auto
     updated_at: strawberry.auto
 
-    @strawberry.field
+    @strawberry.field(description=_doc(m.Faq, "services"))
     async def services(self, info: strawberry.Info) -> list[Service]:
         return [await _load(info, m.Service, self.v, sid) for sid in self.model.services]
 
 
-@pydantic_type(model=m.SocialLink)
+@pydantic_type(model=m.SocialLink, description=m.SocialLink.__doc__)
 class SocialLink(_Wrapped):
     id: strawberry.ID
     platform: strawberry.auto
@@ -309,7 +316,7 @@ class SocialLink(_Wrapped):
     updated_at: strawberry.auto
 
 
-@pydantic_type(model=m.Affiliation)
+@pydantic_type(model=m.Affiliation, description=m.Affiliation.__doc__)
 class Affiliation(_Wrapped):
     id: strawberry.ID
     name: strawberry.auto
@@ -319,12 +326,12 @@ class Affiliation(_Wrapped):
     created_at: strawberry.auto
     updated_at: strawberry.auto
 
-    @strawberry.field
+    @strawberry.field(description=_doc(m.Affiliation, "logo"))
     async def logo(self, info: strawberry.Info) -> Asset | None:
         return await _load(info, m.Asset, self.v, self.model.logo)
 
 
-@pydantic_type(model=m.CustomerAction)
+@pydantic_type(model=m.CustomerAction, description=m.CustomerAction.__doc__)
 class CustomerAction(_Wrapped):
     id: strawberry.ID
     type: strawberry.auto
@@ -333,7 +340,7 @@ class CustomerAction(_Wrapped):
     created_at: strawberry.auto
     updated_at: strawberry.auto
 
-    @strawberry.field
+    @strawberry.field(description=_doc(m.CustomerAction, "channel"))
     async def channel(self, info: strawberry.Info) -> ContactPoint:
         return await _load(info, m.ContactPoint, self.v, self.model.channel)
 
@@ -344,7 +351,7 @@ class CustomerAction(_Wrapped):
         )
         return channel.href if channel is not None else ""
 
-    @strawberry.field
+    @strawberry.field(description=_doc(m.CustomerAction, "services"))
     async def services(self, info: strawberry.Info) -> list[Service]:
         return [await _load(info, m.Service, self.v, sid) for sid in self.model.services]
 
@@ -384,7 +391,7 @@ class ReviewTarget:
         return await _load(info, m.COLLECTIONS[collection], self.v, self.id)
 
 
-@pydantic_type(model=m.ReviewItem)
+@pydantic_type(model=m.ReviewItem, description=m.ReviewItem.__doc__)
 class ReviewItem(_Wrapped):
     id: strawberry.ID
     note: strawberry.auto
@@ -393,7 +400,7 @@ class ReviewItem(_Wrapped):
     created_at: strawberry.auto
     updated_at: strawberry.auto
 
-    @strawberry.field
+    @strawberry.field(description=_doc(m.ReviewItem, "target"))
     def target(self) -> ReviewTarget:
         t = self.model.target
         return ReviewTarget(
@@ -407,7 +414,7 @@ class ReviewItem(_Wrapped):
 # ---- versions and results --------------------------------------------------------------
 
 
-@pydantic_type(model=m.Version, all_fields=True, name="Snapshot")
+@pydantic_type(model=m.Version, all_fields=True, name="Snapshot", description=m.Version.__doc__)
 class Snapshot:
     pass
 

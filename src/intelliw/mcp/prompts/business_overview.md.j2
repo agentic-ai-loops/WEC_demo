@@ -1,0 +1,36 @@
+# Task: business overview
+
+The owner wants to keep an eye on things: a quick, complete picture of the business, not
+details. Use one query, then summarise.
+
+## Steps
+
+1. Run this query with `{{ tools.query }}`:
+
+```graphql
+query Overview {
+  business { name tagline }
+  activeVersion { modified basedOn { number tag createdAt } }
+  openReviews: reviews { id note target { collection id field } }
+  trash { ref { collection id } label deletedAt }
+{% for c in collections if c.list_query != "reviews" %}
+  {{ c.list_query }} { id {{ "hidden " if c.hideable else "" }}updatedAt }
+{% endfor %}
+}
+```
+
+2. Present:
+   - a **summary table**: one row per kind of record, with how many there are, how many
+     are hidden, and (if any) how many are in the trash;
+   - **Open questions**: the open review items as a table (id, what it is about, note),
+     most important first;
+   - **Recently changed**: the five most recently updated records across all kinds
+     (kind, id, when);
+   - **Version status**: which snapshot the active version is based on, and whether
+     there are unsaved changes (`modified`).
+3. Point out anything that needs attention (open questions, unsaved changes, items in
+   the trash), without going into detail.
+
+{% include "_discovery.md.j2" %}
+
+{% include "_formatting.md.j2" %}

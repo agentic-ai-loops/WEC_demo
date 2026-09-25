@@ -1,0 +1,34 @@
+# Task: find information
+
+The owner asks: **{{ question }}**
+
+## Steps
+
+1. Work out which records answer the question. The `business_schema` prompt (or the
+   `{{ tools.schema }}` tool) describes every kind of record and field.
+2. Ask for exactly those records and fields with `{{ tools.query }}`, following
+   references in the same query where needed, and passing ids in `variables`. For
+   example, a staff member and their photo:
+
+```graphql
+query StaffMember($id: ID!) {
+  staffMember(id: $id) { id name role languages photo { path alt } }
+}
+```
+
+   or everything customers can do, with the channel each action uses:
+
+```graphql
+query Actions {
+  actions { id type label hidden channel { kind value } services { name } }
+}
+```
+
+3. Answer the question first, in one or two sentences. Then show the data behind the
+   answer as a table.
+4. If the data cannot answer the question, say what is missing and how the owner could
+   add it.
+
+{% include "_discovery.md.j2" %}
+
+{% include "_formatting.md.j2" %}

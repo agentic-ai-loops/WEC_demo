@@ -1,0 +1,26 @@
+## How the business data works
+
+- **Versions.** There is one editable *active version* and numbered, read-only
+  *snapshots*. Queries read the active version unless given `version: <n>` or
+  `snapshot: "<tag>"`; mutations always change the active version. `takeSnapshot` saves
+  the current state; `activateVersion` rolls back to a snapshot (unsaved changes are kept
+  in an automatic snapshot first).
+- **Updates are patches.** A field left out of a patch stays as it is; a field set to
+  `null` is cleared.
+- **Deleting is reversible.** A deleted entity disappears from every query; `trash` lists
+  deleted entities and `restore<Entity>(id)` brings one back.
+- **Hidden entities** stay in the data but are left off the website (`hidden: true`).
+- **Review items** are open questions for the owner about specific data. Ask the owner,
+  then `resolveReview` or `dismissReview`.
+- **Images** are uploaded by the owner in the web interface; `createAsset` registers an
+  uploaded file, which can then be used (e.g. as a staff member's `photo`).
+- **Order** matters: lists come back in the owner's display order; `move<Entity>` and
+  `reorder<Collection>` change it.
+
+Errors carry a code in `extensions.code`:
+
+| Code | Meaning |
+| --- | --- |
+{% for code, meaning in error_codes.items() %}
+| `{{ code }}` | {{ meaning | cell }} |
+{% endfor %}
