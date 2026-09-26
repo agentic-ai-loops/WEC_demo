@@ -358,3 +358,24 @@ async def test_hiding_a_referenced_entity_keeps_references(api):
     assert errors == [] and data["updateContactPoint"] == {"hidden": True}
     data, _ = await api('{ location(id: "whitby") { phone { id hidden } } }')
     assert data["location"]["phone"] == {"id": "main-phone", "hidden": True}
+
+
+async def test_position_is_exposed_and_follows_the_order(api):
+    data, errors = await api("{ staff { id position } services { position } }")
+    assert errors == []
+    assert data["staff"] == [
+        {"id": "dr-raniero-fernando", "position": 0},
+        {"id": "dr-andrea-chan", "position": 1},
+    ]
+    assert [s["position"] for s in data["services"]] == [0, 1, 2]
+    data, _ = await api(
+        'mutation { moveStaffMember(id: "dr-andrea-chan", before: "dr-raniero-fernando") '
+        "{ id position } }"
+    )
+    assert data["moveStaffMember"] == [
+        {"id": "dr-andrea-chan", "position": 0},
+        {"id": "dr-raniero-fernando", "position": 1},
+    ]
+    data, _ = await api('mutation { restoreStaffMember(id: "dr-peter-chan") { id } }')
+    data, _ = await api('{ staffMember(id: "dr-peter-chan") { position } }')
+    assert data["staffMember"]["position"] == 2  # restored to the end

@@ -122,8 +122,10 @@ Also on every type, omitted above for brevity:
 - `version: Int` on every entity — the snapshot it was read from, `null` for the active
   version.
 
-`position` and `deleted` are not exposed: lists are returned in position order, and
-deleted entities are not returned.
+`position` is exposed on every entity type (its place in the owner's display order,
+0 = first; lists are returned in position order). It is read-only: order changes only
+through `move<Entity>` and `reorder<Collection>`. `deleted` is not exposed: deleted
+entities are not returned.
 
 ### Queries
 

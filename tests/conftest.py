@@ -1,3 +1,4 @@
+import os
 import shutil
 from collections.abc import Iterator
 from pathlib import Path
@@ -13,6 +14,17 @@ from intelliw.businessdata.schema import BusinessData
 from intelliw.workspace import Workspace
 
 DEMO = Path(__file__).parent.parent / "examples" / "demo"
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Tests compare CLI output as plain text: never let the terminal force colour codes.
+
+    Runs before test modules are collected, i.e. before the CLI modules create their
+    rich consoles (which read these variables).
+    """
+    for var in ("FORCE_COLOR", "CLICOLOR_FORCE", "TTY_COMPATIBLE", "TTY_INTERACTIVE"):
+        os.environ.pop(var, None)
+    os.environ["NO_COLOR"] = "1"
 
 
 @pytest.fixture

@@ -119,6 +119,7 @@ async def _reviews(info: strawberry.Info, v: int, collection: str, id: str | Non
 @pydantic_type(model=m.Asset, description=m.Asset.__doc__)
 class Asset(_Wrapped):
     id: strawberry.ID
+    position: strawberry.auto
     type: strawberry.auto
     path: strawberry.auto
     alt: strawberry.auto
@@ -161,6 +162,7 @@ class Business(_Wrapped):
 @pydantic_type(model=m.ContactPoint, description=m.ContactPoint.__doc__)
 class ContactPoint(_Wrapped):
     id: strawberry.ID
+    position: strawberry.auto
     kind: strawberry.auto
     label: strawberry.auto
     value: strawberry.auto
@@ -186,6 +188,7 @@ class ContactPoint(_Wrapped):
 @pydantic_type(model=m.Location, description=m.Location.__doc__)
 class Location(_Wrapped):
     id: strawberry.ID
+    position: strawberry.auto
     name: strawberry.auto
     address: strawberry.auto
     geo: strawberry.auto
@@ -207,6 +210,7 @@ class Location(_Wrapped):
 @pydantic_type(model=m.ServiceCategory, description=m.ServiceCategory.__doc__)
 class ServiceCategory(_Wrapped):
     id: strawberry.ID
+    position: strawberry.auto
     name: strawberry.auto
     hidden: strawberry.auto
     created_at: strawberry.auto
@@ -221,6 +225,7 @@ class ServiceCategory(_Wrapped):
 @pydantic_type(model=m.Service, description=m.Service.__doc__)
 class Service(_Wrapped):
     id: strawberry.ID
+    position: strawberry.auto
     name: strawberry.auto
     summary: strawberry.auto
     description: strawberry.auto
@@ -255,6 +260,7 @@ class Service(_Wrapped):
 @pydantic_type(model=m.ProductCategory, description=m.ProductCategory.__doc__)
 class ProductCategory(_Wrapped):
     id: strawberry.ID
+    position: strawberry.auto
     name: strawberry.auto
     description: strawberry.auto
     hidden: strawberry.auto
@@ -273,6 +279,7 @@ class ProductCategory(_Wrapped):
 @pydantic_type(model=m.StaffMember, description=m.StaffMember.__doc__)
 class StaffMember(_Wrapped):
     id: strawberry.ID
+    position: strawberry.auto
     name: strawberry.auto
     role: strawberry.auto
     credentials: strawberry.auto
@@ -294,6 +301,7 @@ class StaffMember(_Wrapped):
 @pydantic_type(model=m.Faq, description=m.Faq.__doc__)
 class Faq(_Wrapped):
     id: strawberry.ID
+    position: strawberry.auto
     question: strawberry.auto
     answer: strawberry.auto
     hidden: strawberry.auto
@@ -308,6 +316,7 @@ class Faq(_Wrapped):
 @pydantic_type(model=m.SocialLink, description=m.SocialLink.__doc__)
 class SocialLink(_Wrapped):
     id: strawberry.ID
+    position: strawberry.auto
     platform: strawberry.auto
     url: strawberry.auto
     label: strawberry.auto
@@ -319,6 +328,7 @@ class SocialLink(_Wrapped):
 @pydantic_type(model=m.Affiliation, description=m.Affiliation.__doc__)
 class Affiliation(_Wrapped):
     id: strawberry.ID
+    position: strawberry.auto
     name: strawberry.auto
     description: strawberry.auto
     url: strawberry.auto
@@ -334,6 +344,7 @@ class Affiliation(_Wrapped):
 @pydantic_type(model=m.CustomerAction, description=m.CustomerAction.__doc__)
 class CustomerAction(_Wrapped):
     id: strawberry.ID
+    position: strawberry.auto
     type: strawberry.auto
     label: strawberry.auto
     hidden: strawberry.auto
@@ -394,6 +405,7 @@ class ReviewTarget:
 @pydantic_type(model=m.ReviewItem, description=m.ReviewItem.__doc__)
 class ReviewItem(_Wrapped):
     id: strawberry.ID
+    position: strawberry.auto
     note: strawberry.auto
     status: strawberry.auto
     resolution: strawberry.auto
