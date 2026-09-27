@@ -1,7 +1,8 @@
 # Task: review concerns
 
 The owner wants to focus on problems and loose ends. Find them, rank them, and work
-through them one at a time.
+through them one at a time. Hidden records are problems too, so every query includes them
+(`includeHidden: true`).
 
 ## Steps
 
@@ -9,11 +10,11 @@ through them one at a time.
 
 ```graphql
 query Concerns {
-  reviews { id note target { collection id field entity { __typename } } }
+  reviews(includeHidden: true) { id note target { collection id field entity { __typename } } }
   activeVersion { modified basedOn { number tag } }
-  staff { id name hidden photo { id } }
-  services { id name hidden image { id } }
-  unusedAssets: assets(unused: true) { id type path }
+  staff(includeHidden: true) { id name hidden photo { id } }
+  services(includeHidden: true) { id name hidden image { id } }
+  unusedAssets: assets(unused: true, includeHidden: true) { id type path }
   unregisteredFiles: resourceFiles(unregistered: true)
   trash { ref { collection id } label deletedAt }
 }
@@ -22,7 +23,8 @@ query Concerns {
 2. Build a **concerns table** (priority, concern, affected records), covering:
    - open review items: questions the owner has to answer;
    - staff without a photo and services without an image;
-   - uploaded images that are not used, and uploaded files not registered as assets;
+   - uploaded images that are not used by any record (hidden or not), and uploaded files
+     not registered as assets;
    - hidden records: confirm they should stay off the website;
    - records in the trash: restore or leave for purging;
    - unsaved changes since the last snapshot (`modified`).

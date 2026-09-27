@@ -1,0 +1,9 @@
+# One faqs entity with every field; related entities one level deep.
+query Entity($id: ID!) {
+  faq(id: $id) {
+    __typename id position hidden version
+    question answer
+    services { __typename id name summary hidden }
+    createdAt updatedAt
+  }
+}

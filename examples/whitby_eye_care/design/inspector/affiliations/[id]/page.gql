@@ -1,0 +1,9 @@
+# One affiliations entity with every field; related entities one level deep.
+query Entity($id: ID!) {
+  affiliation(id: $id) {
+    __typename id position hidden version
+    name description url
+    logo { __typename id type path alt }
+    createdAt updatedAt
+  }
+}

@@ -1,0 +1,2 @@
+# One page per contacts entity.
+query { contactPoints { id } }

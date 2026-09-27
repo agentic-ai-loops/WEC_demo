@@ -1,0 +1,233 @@
+{#- Generic rendering of GraphQL results as a hierarchy: sections of cards, cards of
+    fields, fields of nested values. Every value is shown, whatever its shape. -#}
+
+{%- set COLLECTION_TYPES = {
+  "business": "Business", "contacts": "ContactPoint", "locations": "Location",
+  "service_categories": "ServiceCategory", "services": "Service",
+  "product_categories": "ProductCategory", "staff": "StaffMember", "faqs": "Faq",
+  "social_links": "SocialLink", "affiliations": "Affiliation", "actions": "CustomerAction",
+  "assets": "Asset", "reviews": "ReviewItem",
+} -%}
+{#- typename -> (route of its entity pages, key in the site index, section title) -#}
+{%- set ROUTES = {
+  "ContactPoint": ("contacts", "contactPoints", "Contact points"),
+  "Location": ("locations", "locations", "Locations"),
+  "ServiceCategory": ("service-categories", "serviceCategories", "Service categories"),
+  "Service": ("services", "services", "Services"),
+  "ProductCategory": ("product-categories", "productCategories", "Product categories"),
+  "StaffMember": ("staff", "staff", "Staff"),
+  "Faq": ("faqs", "faqs", "FAQs"),
+  "SocialLink": ("social-links", "socialLinks", "Social links"),
+  "Affiliation": ("affiliations", "affiliations", "Affiliations"),
+  "CustomerAction": ("actions", "actions", "Customer actions"),
+  "Asset": ("assets", "assets", "Assets"),
+  "ReviewItem": ("reviews", "reviews", "Review items"),
+} -%}
+{#- Shown in a card's footer rather than its body. -#}
+{%- set META = ["__typename", "position", "version", "createdAt", "updatedAt"] -%}
+{#- The first of these a record has is its card title. -#}
+{%- set TITLE_FIELDS = ["name", "label", "question", "path"] -%}
+
+{%- macro anchor(typename, id) -%}
+{{ typename }}{% if id is not none %}-{{ id }}{% endif %}
+{%- endmacro -%}
+
+{#- The entity page of an entity, if it was rendered (hidden ones only with
+    --include-hidden); empty otherwise. The site index (`site`) lists what exists. -#}
+{%- macro entity_url(typename, id) -%}
+{%- if typename == "Business" -%}{{ url("business/") }}
+{%- elif typename in ROUTES and id is not none -%}
+  {%- set found = site[ROUTES[typename][1]] | selectattr("id", "equalto", id) | list -%}
+  {%- if found -%}{{ url(ROUTES[typename][0] ~ "/" ~ id ~ "/") }}{%- endif -%}
+{%- endif -%}
+{%- endmacro -%}
+
+{#- The display title of an entity, from the site index; its id if not listed. -#}
+{%- macro entity_title(typename, id) -%}
+{%- if typename == "Business" -%}{{ site.business.name }}
+{%- elif typename in ROUTES and id is not none -%}
+  {%- set found = site[ROUTES[typename][1]] | selectattr("id", "equalto", id) | list -%}
+  {%- if found -%}{{ record_title(found[0]) }}{%- else -%}{{ id }}{%- endif -%}
+{%- endif -%}
+{%- endmacro -%}
+
+{#- A record's title: its name / label / question / path, else its id. -#}
+{%- macro record_title(row) -%}
+{%- set tk = title_key(row) | trim -%}
+{%- if tk -%}{{ row[tk] }}{%- else -%}{{ row.get("id", "") }}{%- endif -%}
+{%- endmacro -%}
+
+{#- A link to an entity's page, or its name alone if it has none. -#}
+{%- macro entity_link(typename, id, label, cls="") -%}
+{%- set href = entity_url(typename, id) | trim -%}
+{%- if href -%}<a class="{{ cls }}" href="{{ href }}">{{ label }}</a>{%- else -%}<span class="{{ cls }} no-page" title="no page (hidden records are rendered with --include-hidden)">{{ label }}</span>{%- endif -%}
+{%- endmacro -%}
+
+{#- The shape of a value: decides how it is laid out. -#}
+{%- macro kind(v) -%}
+{%- if v is none -%}null
+{%- elif v is boolean -%}bool
+{%- elif v is number -%}num
+{%- elif v is string -%}
+  {%- if v | length > 90 or '\n' in v -%}long
+  {%- elif v | length >= 19 and v[4:5] == '-' and v[10:11] == 'T' -%}date
+  {%- else -%}text{%- endif -%}
+{%- elif v is mapping -%}
+  {%- if v.__typename is defined and v | length <= 3 and (v.id is defined or v.__typename == "Business") -%}ref
+  {%- elif v.collection is defined and v.id is defined and v.entity is not defined and v | length <= 3 -%}eref
+  {%- else -%}record{%- endif -%}
+{%- elif v is sequence -%}
+  {%- if v | length == 0 -%}empty
+  {%- elif v[0] is mapping -%}
+    {%- set first = kind(v[0]) | trim -%}
+    {%- if first in ("ref", "eref") -%}refs{%- else -%}records{%- endif -%}
+  {%- else -%}scalars{%- endif -%}
+{%- else -%}text
+{%- endif -%}
+{%- endmacro -%}
+
+{#- A chip linking to an entity's page: {__typename, id}; an Asset shows its image. -#}
+{%- macro ref(r) -%}
+{%- set id = r.get("id") -%}
+{%- set href = entity_url(r.__typename, id) | trim -%}
+{%- set tag = "a" if href else "span" -%}
+{%- if r.__typename == "Asset" -%}
+<{{ tag }} class="ref ref-asset{{ '' if href else ' no-page' }}"{% if href %} href="{{ href }}"{% endif %} title="Asset {{ id }} · {{ r.path }}"><img src="{{ asset_url(r) }}" alt="" loading="lazy"><span class="ref-id">{{ id }}</span></{{ tag }}>
+{%- else -%}
+<{{ tag }} class="ref{{ '' if href else ' no-page' }}"{% if href %} href="{{ href }}"{% endif %} title="{{ r.__typename }}{% if id is not none %} {{ id }}{% endif %}"><span class="ref-type">{{ r.__typename }}</span><span class="ref-id">{{ entity_title(r.__typename, id) }}</span></{{ tag }}>
+{%- endif -%}
+{%- endmacro -%}
+
+{#- A chip from an EntityRef {collection, id, field}. -#}
+{%- macro entity_ref(r) -%}
+{%- set typename = COLLECTION_TYPES[r.collection] -%}
+{%- set href = entity_url(typename, r.id) | trim -%}
+{%- set tag = "a" if href else "span" -%}
+<{{ tag }} class="ref{{ '' if href else ' no-page' }}"{% if href %} href="{{ href }}"{% endif %} title="{{ r.collection }}{% if r.id is not none %} {{ r.id }}{% endif %}"><span class="ref-type">{{ r.collection }}</span>{% if r.id is not none or typename == "Business" %}<span class="ref-id">{{ entity_title(typename, r.id) }}</span>{% endif %}{% if r.field %}<span class="ref-field">.{{ r.field }}</span>{% endif %}</{{ tag }}>
+{%- endmacro -%}
+
+{#- A value on one line (or a block, for long text and nested values). -#}
+{%- macro value(v) -%}
+{%- set k = kind(v) | trim -%}
+{%- if k == "null" -%}<span class="v-null">null</span>
+{%- elif k == "bool" -%}<span class="v-bool v-{{ 'true' if v else 'false' }}">{{ 'true' if v else 'false' }}</span>
+{%- elif k == "num" -%}<span class="v-num">{{ v }}</span>
+{%- elif k == "date" -%}<time class="v-date" datetime="{{ v }}">{{ v }}</time>
+{%- elif k == "long" -%}<div class="v-long">{{ v }}</div>
+{%- elif k == "text" -%}<span class="v-str">{{ v }}</span>
+{%- elif k == "ref" -%}{{ ref(v) }}
+{%- elif k == "eref" -%}{{ entity_ref(v) }}
+{%- elif k == "empty" -%}<span class="v-empty">[ ]</span>
+{%- elif k == "scalars" -%}<span class="chips">{% for x in v %}<span class="chip-v">{{ x }}</span>{% endfor %}</span>
+{%- elif k == "refs" -%}<span class="chips">{% for x in v %}{{ value(x) }}{% endfor %}</span>
+{%- elif k == "record" -%}{{ fields(v, nested=True) }}
+{%- elif k == "records" -%}{{ records(v) }}
+{%- endif -%}
+{%- endmacro -%}
+
+{#- One field: key and value side by side; nested values and long text as a block. -#}
+{%- macro field(key, v) -%}
+{%- set k = kind(v) | trim -%}
+{%- if k in ("record", "records") -%}
+<details class="f f-sub" data-field="{{ key }}" open>
+  <summary class="k">{{ key }}{% if k == "records" %} <span class="count">{{ v | length }}</span>{% elif v.__typename is defined %} {{ entity_link(v.__typename, v.get("id"), v.__typename ~ " · " ~ record_title(v), "sub-link") }}{% endif %}</summary>
+  <div class="v">{% if k == "record" and v.get("__typename") == "Asset" %}<img class="thumb nested-img" src="{{ asset_url(v) }}" alt="" loading="lazy">{% endif %}{{ value(v) }}</div>
+</details>
+{%- elif k in ("long", "refs", "scalars") -%}
+<div class="f f-wide" data-field="{{ key }}"><div class="k">{{ key }}{% if k != "long" %} <span class="count">{{ v | length }}</span>{% endif %}</div><div class="v">{{ value(v) }}</div></div>
+{%- else -%}
+<div class="f" data-field="{{ key }}"><div class="k">{{ key }}</div><div class="v">{{ value(v) }}</div></div>
+{%- endif -%}
+{%- endmacro -%}
+
+{#- An object's fields as a key/value list, in query order. -#}
+{%- macro fields(obj, skip=[], nested=False) -%}
+<div class="fields{{ ' nested' if nested }}">
+{%- for key, v in obj.items() if key not in skip %}
+  {{ field(key, v) }}
+{%- endfor %}
+</div>
+{%- endmacro -%}
+
+{#- A list of nested objects: related entities as linked blocks; other objects as a
+    compact table when narrow, else stacked blocks. -#}
+{%- macro records(rows) -%}
+{%- if rows[0].__typename is defined and rows[0].id is defined -%}
+{%- for row in rows %}
+<div class="stack{{ ' is-hidden' if row.get('hidden') }}">
+  <div class="stack-head">{{ entity_link(row.__typename, row.id, record_title(row), "sub-link") }}<code class="id">{{ row.id }}</code>{% if row.get('hidden') %}<span class="badge b-hidden">hidden</span>{% endif %}</div>
+  {{ fields(row, skip=["__typename", "id", title_key(row) | trim]) }}
+</div>
+{%- endfor -%}
+{%- else -%}
+{%- set simple = rows | map("list") | map("length") | max <= 5 -%}
+{%- if simple -%}
+<div class="mini-wrap"><table class="mini">
+  <thead><tr>{% for key in rows[0].keys() %}<th>{{ key }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for row in rows %}<tr>{% for x in row.values() %}<td>{{ value(x) }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+</table></div>
+{%- else -%}
+{%- for row in rows %}<div class="stack">{{ fields(row, nested=True) }}</div>{% endfor -%}
+{%- endif -%}
+{%- endif -%}
+{%- endmacro -%}
+
+{#- The card title of a record: its name / label / question / path, else its id. -#}
+{%- macro title_key(row) -%}
+{%- for key in TITLE_FIELDS if key in row -%}{% if loop.first %}{{ key }}{% endif %}{%- endfor -%}
+{%- endmacro -%}
+
+{#- One record: header (title, id, badges), fields, and a meta footer. -#}
+{%- macro card(row, extra_class="") -%}
+{%- set tk = title_key(row) | trim -%}
+<article class="card{{ ' is-hidden' if row.get('hidden') }} {{ extra_class }}"{% if row.get('id') is not none and row.__typename is defined %} id="{{ anchor(row.__typename, row.id) }}"{% endif %}>
+  <header>
+    <h3 data-field="{{ tk or 'id' }}" title="{{ tk or 'id' }}">{% if row.__typename is defined %}{{ entity_link(row.__typename, row.get('id'), record_title(row), "title-link") }}{% else %}{{ record_title(row) }}{% endif %}</h3>
+    <div class="badges">
+      {%- if tk and row.get('id') is not none %}<code class="id" data-field="id" title="id">{{ row.id }}</code>{% endif -%}
+      {%- if 'hidden' in row %}<span class="badge {{ 'b-hidden' if row.hidden else 'b-shown' }}" data-field="hidden">hidden: {{ 'true' if row.hidden else 'false' }}</span>{% endif -%}
+      {%- if 'status' in row %}<span class="badge b-{{ row.status }}" data-field="status" title="status">{{ row.status }}</span>{% endif -%}
+      {%- for key in ('kind', 'type', 'platform') if key in row %}<span class="badge" data-field="{{ key }}" title="{{ key }}">{{ key }}: {{ row[key] }}</span>{% endfor -%}
+    </div>
+  </header>
+  {{ fields(row, skip=META + ['id', 'hidden', 'status', 'kind', 'type', 'platform', tk]) }}
+  <footer class="meta">
+    {%- for key in META if key in row %}<span data-field="{{ key }}"><span class="k">{{ key }}</span> {{ value(row[key]) }}</span>{% endfor -%}
+  </footer>
+</article>
+{%- endmacro -%}
+
+{#- A section's records as a grid of cards. -#}
+{%- macro cards(rows, wide=False) -%}
+{%- if not rows -%}<p class="empty">No records.</p>
+{%- else -%}
+<div class="cards{{ ' wide' if wide }}">{% for row in rows %}{{ card(row) }}{% endfor %}</div>
+{%- endif -%}
+{%- endmacro -%}
+
+{#- A plain table, for short uniform lists (snapshots). -#}
+{%- macro table(rows) -%}
+{%- if not rows -%}<p class="empty">No records.</p>
+{%- else -%}{{ records(rows) }}{%- endif -%}
+{%- endmacro -%}
+
+{#- Every Asset an object refers to, at any depth, as figures: the image, the field that
+    refers to it, and a link to the asset's page. Empty if there are none. -#}
+{%- macro asset_figures(obj, prefix="") -%}
+{%- for key, v in obj.items() -%}
+  {%- if v is mapping and v.get("__typename") == "Asset" -%}
+  <figure class="asset-fig">
+    <a class="asset-img" href="{{ asset_url(v) }}"><img src="{{ asset_url(v) }}" alt="{{ v.get('alt', '') }}" loading="lazy"></a>
+    <figcaption>
+      <span class="k" data-asset-field="{{ prefix ~ key }}">{{ prefix ~ key }}</span>
+      {{ entity_link("Asset", v.id, v.id, "sub-link") }}
+      <span class="v-str">{{ v.path }}</span>
+      {%- if v.get("alt") %}<span class="dim">{{ v.alt }}</span>{% endif %}
+    </figcaption>
+  </figure>
+  {%- elif v is mapping -%}{{ asset_figures(v, prefix ~ key ~ ".") }}
+  {%- elif v is sequence and v is not string -%}
+    {%- for item in v if item is mapping -%}{{ asset_figures(item, prefix ~ key ~ "[" ~ loop.index0 ~ "].") }}{%- endfor -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- endmacro -%}

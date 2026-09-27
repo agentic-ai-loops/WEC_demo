@@ -1,0 +1,8 @@
+query Home {
+  business { description }
+  serviceCategories {
+    id
+    name
+    services { id name summary }
+  }
+}

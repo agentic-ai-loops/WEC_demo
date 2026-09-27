@@ -1,7 +1,8 @@
 # Task: business overview
 
 The owner wants to keep an eye on things: a quick, complete picture of the business, not
-details. Use one query, then summarise.
+details. Use one query, then summarise. The query includes hidden records
+(`includeHidden: true`) so they can be counted.
 
 ## Steps
 
@@ -14,7 +15,7 @@ query Overview {
   openReviews: reviews { id note target { collection id field } }
   trash { ref { collection id } label deletedAt }
 {% for c in collections if c.list_query != "reviews" %}
-  {{ c.list_query }} { id {{ "hidden " if c.hideable else "" }}updatedAt }
+  {{ c.list_all }} { id {{ "hidden " if c.hideable else "" }}updatedAt }
 {% endfor %}
 }
 ```

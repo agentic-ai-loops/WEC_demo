@@ -16,13 +16,16 @@ query StaffMember($id: ID!) {
 }
 ```
 
-   or everything customers can do, with the channel each action uses:
+   or everything customers can do, with the channel each action uses — including hidden
+   actions, since the owner is asking about their data:
 
 ```graphql
 query Actions {
-  actions { id type label hidden channel { kind value } services { name } }
+  actions(includeHidden: true) { id type label hidden channel { kind value } services { name } }
 }
 ```
+
+   Leave out `includeHidden` only when the question is about what the website shows.
 
 3. Answer the question first, in one or two sentences. Then show the data behind the
    answer as a table.

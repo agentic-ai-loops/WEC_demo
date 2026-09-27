@@ -1,0 +1,4 @@
+# One page per visible service.
+query ServicePages {
+  services { slug: id }
+}

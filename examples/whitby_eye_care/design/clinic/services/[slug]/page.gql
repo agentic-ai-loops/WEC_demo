@@ -1,0 +1,11 @@
+query Service($slug: ID!) {
+  service(id: $slug) {
+    name
+    summary
+    description
+    category { name }
+    image { __typename id path alt }
+    faqs { question answer }
+    actions { label href }
+  }
+}

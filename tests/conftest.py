@@ -36,6 +36,23 @@ def demo_ws(tmp_path: Path) -> Workspace:
 
 
 @pytest.fixture
+def data_ws(tmp_path: Path) -> Workspace:
+    """A workspace with the sample #businessdata in its database and every asset file."""
+    ws = Workspace(tmp_path / "ws")
+    ws.resources_dir.mkdir(parents=True)
+    data = BusinessData.model_validate(whitby())
+    for asset in data.assets:
+        (ws.resources_dir / asset.path).write_bytes(b"png")
+    engine = create_db_engine(ws.database_file)
+    init_db(engine)
+    with session_factory(engine)() as s:
+        documents.initialize(s, data)
+        s.commit()
+    engine.dispose()
+    return ws
+
+
+@pytest.fixture
 def engine() -> Engine:
     """An in-memory database with the schema."""
     engine = create_db_engine(None)

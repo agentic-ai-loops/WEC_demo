@@ -117,7 +117,8 @@ type ReviewTarget { collection: Collection!  id: ID  field: String
 
 Also on every type, omitted above for brevity:
 
-- `hidden: Boolean!` on content entities (01-businessdata, rule 10);
+- `hidden: Boolean!` on content entities (01-businessdata, rule 10; see *Queries* for
+  how queries treat hidden entities);
 - `createdAt: DateTime!` and `updatedAt: DateTime!` on every entity (rule 11);
 - `version: Int` on every entity — the snapshot it was read from, `null` for the active
   version.
@@ -163,13 +164,28 @@ type Query {
 - The workspace comes from the server context, never from an argument.
 - Every field except `snapshots` and `activeVersion` takes the optional `version` /
   `snapshot` arguments (see *Versions*); omitted above for brevity.
+- Every field returning entities (`business`, the list and by-id fields, `assets`,
+  `reviews`) takes `includeHidden: Boolean! = false`; also omitted above.
 - **Deleted entities are never returned**, except by `trash`: list and by-id queries (a
   by-id query for a deleted entity returns `null`), relation fields, `usedBy`,
   `ReviewTarget.entity` and the `unused` / `unregistered` queries all exclude them (a
   deleted asset's file counts as unregistered).
-- **Hidden entities are returned**, with `hidden: true`. Every list query over content
-  entities takes an optional `hidden: Boolean` filter (`staff(hidden: false)` = visible
-  staff only); omitted = all.
+- **Hidden entities are left out by default** — what a query returns is what the #site
+  shows. With `includeHidden: true` they are returned, with `hidden: true`. The choice
+  is made once, on the top-level field, and applies to everything nested under it:
+  - list fields and relation lists (`ServiceCategory.services`, `Service.faqs`,
+    `Service.actions`, `ContactPoint.usedBy`, `Faq.services`,
+    `CustomerAction.services`) leave hidden entities out;
+  - optional references to a hidden entity (`Location.phone`, `ReviewTarget.entity`)
+    are `null`; a by-id query for a hidden entity returns `null`;
+  - `Asset.usedBy` leaves out hidden referrers, so `assets(unused: true)` also lists
+    assets used only by hidden entities (with `includeHidden: true`: only assets no
+    non-deleted entity uses);
+  - required references (`Service.category`, `CustomerAction.channel`) always resolve,
+    even to a hidden entity; its `hidden` field tells.
+  Hiding does not cascade: a visible service in a hidden category is still returned.
+  Mutation results always include hidden entities (the changed entity, `move` /
+  `reorder` lists, and their nested fields).
 
 ### Mutations
 
@@ -233,8 +249,10 @@ wires them to entities:
 | Change alt text or type | `updateAsset(id, {alt, type})` |
 | Remove the asset | `deleteAsset(id)` |
 
-- `path` is relative to `businessdata/resources/` and must name an existing file,
-  otherwise `VALIDATION`.
+- `path` is relative to `businessdata/resources/` and must name an existing file inside
+  it, otherwise `VALIDATION`. Paths that could leave the folder (`..`, a leading `/`,
+  hidden files, symlinks pointing out) are refused (01-businessdata, *Snapshot
+  versioning*).
 - Files are immutable (01-businessdata, *Snapshot versioning*); the API never writes or
   removes files.
 - `resourceFiles(unregistered: true)` lists files no asset refers to.
@@ -493,7 +511,9 @@ mutation { resolveReview(id: "booking-system", resolution: "Use Atlas; JotForm p
 - [x] `createAsset` / `updateAsset` with a `path` that does not exist fails with `VALIDATION`.
 - [x] `updateAsset(id, {path})` changes the file while every reference to the asset is kept.
 - [x] `resourceFiles(unregistered: true)` lists exactly the files no non-deleted asset refers to.
-- [x] Hidden entities are returned with `hidden: true`; `hidden: false` filters them out.
+- [x] Queries leave hidden entities out by default, in lists, relation lists, optional
+      references and by-id queries; `includeHidden: true` returns them, in nested fields
+      too; required references always resolve; mutation results include them.
 - [x] Hiding a referenced entity succeeds and leaves the references intact.
 - [x] `createdAt` / `updatedAt` cannot be set: they are not input fields, so GraphQL
       rejects them during document validation (see *Implementation notes*).

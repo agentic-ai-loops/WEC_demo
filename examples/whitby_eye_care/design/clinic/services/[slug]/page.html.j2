@@ -1,0 +1,23 @@
+{% extends "_layouts/base.html.j2" %}
+{% set service = data.service %}
+{% block title %}{{ service.name }} · {{ site.business.name }}{% endblock %}
+{% block main %}
+  <p class="crumbs"><a href="{{ url('') }}">Home</a> › {{ service.category.name }}</p>
+  <h1>{{ service.name }}</h1>
+  {% if service.image %}
+  <img class="service" src="{{ asset_url(service.image) }}" alt="{{ service.image.alt or '' }}">
+  {% endif %}
+  {% if service.summary %}<p class="summary">{{ service.summary }}</p>{% endif %}
+  {% if service.description %}<p>{{ service.description }}</p>{% endif %}
+  {% if service.actions %}
+  <p class="actions">
+    {% for a in service.actions %}<a class="button" href="{{ a.href }}">{{ a.label }}</a> {% endfor %}
+  </p>
+  {% endif %}
+  {% if service.faqs %}
+  <h2>Questions</h2>
+  <dl>
+    {% for f in service.faqs %}<dt>{{ f.question }}</dt><dd>{{ f.answer }}</dd>{% endfor %}
+  </dl>
+  {% endif %}
+{% endblock %}

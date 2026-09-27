@@ -103,6 +103,13 @@ class EntityDoc:
     def hideable(self) -> bool:
         return any(f.name == "hidden" for f in self.fields)
 
+    @property
+    def list_all(self) -> str | None:
+        """The list query including hidden records (the owner sees everything)."""
+        if self.list_query is None or not self.hideable:
+            return self.list_query
+        return f"{self.list_query}(includeHidden: true)"
+
     def selection(self) -> str:
         """A GraphQL selection of the entity's own scalar fields (a valid example query)."""
         picked = [f.name for f in self.data_fields if f.kind in ("scalar", "enum")]

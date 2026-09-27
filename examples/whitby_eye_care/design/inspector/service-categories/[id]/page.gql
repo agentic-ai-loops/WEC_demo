@@ -1,0 +1,9 @@
+# One service-categories entity with every field; related entities one level deep.
+query Entity($id: ID!) {
+  serviceCategory(id: $id) {
+    __typename id position hidden version
+    name
+    services { __typename id name summary hidden }
+    createdAt updatedAt
+  }
+}

@@ -9,17 +9,18 @@ The owner wants to explore the whole business, one area at a time.
 ## Steps
 
 {% if selected %}
-1. Read the area. These queries return every record with its own fields:
+1. Read the area. These queries return every record with its own fields, hidden ones
+   included:
 
 {% for e in selected if e.list_query %}
 ```graphql
 query Explore{{ e.name }} {
-  {{ e.list_query }} { {{ e.selection() }} }
+  {{ e.list_all }} { {{ e.selection() }} }
 }
 ```
 
 {% endfor %}
-2. Present each kind as a table. Follow references on request (e.g. a service's
+2. Present each kind as a table, marking hidden records. Follow references on request (e.g. a service's
    `category`, `faqs` and `actions`); the `business_schema` prompt lists every field.
 3. Offer to drill into a single record (`<entity>(id: ...)`) or to move on to a related
    area.
@@ -39,7 +40,7 @@ There is no area called "{{ area }}". Show the areas below and ask which one to 
 
 ```graphql
 query ExploreServices {
-  serviceCategories { id name services { id name summary hidden } }
+  serviceCategories(includeHidden: true) { id name hidden services { id name summary hidden } }
 }
 ```
 

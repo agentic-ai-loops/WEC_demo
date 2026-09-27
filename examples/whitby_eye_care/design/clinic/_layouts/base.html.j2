@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site.business.name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url('style.css') }}">
+  {% if site.business.favicon %}<link rel="icon" href="{{ asset_url(site.business.favicon) }}">{% endif %}
+</head>
+<body data-render="{{ url('render.json') }}">
+  {% if render.include_hidden or render.businessdata.version is not none %}
+  <p class="preview">Preview: {{ render.businessdata.version_name }}{{ ", hidden records shown" if render.include_hidden }}</p>
+  {% endif %}
+  <header>
+    <a class="brand" href="{{ url('') }}">
+      {% if site.business.logo %}<img src="{{ asset_url(site.business.logo) }}" alt="{{ site.business.logo.alt or '' }}">{% endif %}
+      <span>{{ site.business.name }}</span>
+    </a>
+  </header>
+  <main>{% block main %}{% endblock %}</main>
+  <footer>
+    <ul class="contacts">
+      {% for c in site.contactPoints %}
+      <li><a href="{{ c.href }}">{{ c.label }}: {{ c.value }}</a></li>
+      {% endfor %}
+    </ul>
+    <p class="updated">Last updated <span id="updated"></span></p>
+  </footer>
+  <script>
+    fetch(document.body.dataset.render)
+      .then((r) => r.json())
+      .then((info) => {
+        const when = info.businessdata.updated_at || info.rendered_at;
+        document.getElementById("updated").textContent = new Date(when).toLocaleDateString();
+      });
+  </script>
+</body>
+</html>

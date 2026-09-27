@@ -1,0 +1,18 @@
+{% extends "_layouts/base.html.j2" %}
+{% block main %}
+  <section class="hero">
+    <img src="{{ url('hero.png') }}" alt="">
+    <h1>{{ site.business.tagline }}</h1>
+  </section>
+  <p>{{ data.business.description }}</p>
+  {% for category in data.serviceCategories if category.services %}
+  <section>
+    <h2>{{ category.name }}</h2>
+    <ul class="services">
+      {% for s in category.services %}
+      <li><a href="{{ url('services/' ~ s.id ~ '/') }}">{{ s.name }}</a>{% if s.summary %} — {{ s.summary }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+{% endblock %}

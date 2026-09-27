@@ -24,7 +24,11 @@ from pydantic import (
 )
 from pydantic.alias_generators import to_camel
 
+from intelliw.businessdata.resources import MAX_PATH_LENGTH, RESOURCE_PATH
+
 Slug = Annotated[str, Field(pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")]
+# A file under businessdata/resources/ (see `resources.RESOURCE_PATH`): no `..`, no `/...`
+ResourcePath = Annotated[str, Field(pattern=RESOURCE_PATH, max_length=MAX_PATH_LENGTH)]
 Markdown = str  # CommonMark (rule 9)
 
 
@@ -327,7 +331,10 @@ class Asset(Entity):
     """An image of the business (logo, favicon or photo), uploaded by the owner."""
 
     type: AssetType = _d("What the image is used as: logo, favicon or photo.")
-    path: str = _d("File name of the uploaded image.")
+    path: ResourcePath = _d(
+        "File of the uploaded image, relative to businessdata/resources/ "
+        "(e.g. `dr-jane-doe.jpg` or `staff/dr-jane-doe.jpg`)."
+    )
     alt: str = _d("Text description of the image, for accessibility.", "")
 
 

@@ -1,0 +1,148 @@
+# A dump of the entire #businessdata, every field of every collection.
+# References are selected as { __typename id } so the page can link each one to its row;
+# every Asset selects `__typename id path` so its file is published.
+# Hidden records are included when the site is rendered with --include-hidden.
+
+fragment AssetRef on Asset { __typename id path }
+
+query Dump {
+  business {
+    __typename
+    version
+    name
+    legalName
+    tagline
+    category
+    description
+    brands
+    serviceAreas
+    servingSince
+    paymentMethods
+    logo { ...AssetRef }
+    favicon { ...AssetRef }
+    reviews { __typename id }
+    createdAt
+    updatedAt
+  }
+
+  contactPoints {
+    __typename id position hidden version
+    kind label value primary href
+    usedBy { __typename id }
+    reviews { __typename id }
+    createdAt updatedAt
+  }
+
+  locations {
+    __typename id position hidden version
+    name
+    address { street city region postalCode country }
+    geo { lat lng }
+    mapUrl
+    hours { day seq open close closed }
+    phone { __typename id }
+    reviews { __typename id }
+    createdAt updatedAt
+  }
+
+  serviceCategories {
+    __typename id position hidden version
+    name
+    services { __typename id }
+    createdAt updatedAt
+  }
+
+  services {
+    __typename id position hidden version
+    name summary description audience
+    category { __typename id }
+    image { ...AssetRef }
+    faqs { __typename id }
+    actions { __typename id }
+    reviews { __typename id }
+    createdAt updatedAt
+  }
+
+  productCategories {
+    __typename id position hidden version
+    name description
+    image { ...AssetRef }
+    reviews { __typename id }
+    createdAt updatedAt
+  }
+
+  staff {
+    __typename id position hidden version
+    name role credentials bio languages
+    photo { ...AssetRef }
+    reviews { __typename id }
+    createdAt updatedAt
+  }
+
+  faqs {
+    __typename id position hidden version
+    question answer
+    services { __typename id }
+    createdAt updatedAt
+  }
+
+  socialLinks {
+    __typename id position hidden version
+    platform url label
+    createdAt updatedAt
+  }
+
+  affiliations {
+    __typename id position hidden version
+    name description url
+    logo { ...AssetRef }
+    createdAt updatedAt
+  }
+
+  actions {
+    __typename id position hidden version
+    type label href
+    channel { __typename id }
+    services { __typename id }
+    createdAt updatedAt
+  }
+
+  assets {
+    __typename id position version
+    type path alt
+    usedBy { collection id field }
+    createdAt updatedAt
+  }
+
+  reviews(status: null) {
+    __typename id position version
+    status
+    target {
+      collection id field
+      entity {
+        __typename
+        ... on ContactPoint { id }
+        ... on Location { id }
+        ... on ServiceCategory { id }
+        ... on Service { id }
+        ... on ProductCategory { id }
+        ... on StaffMember { id }
+        ... on Faq { id }
+        ... on SocialLink { id }
+        ... on Affiliation { id }
+        ... on CustomerAction { id }
+        ... on Asset { __typename id path }
+      }
+    }
+    note resolution
+    createdAt updatedAt
+  }
+
+  trash { ref { collection id field } label deletedAt }
+
+  snapshots { number tag parent createdAt }
+  activeVersion { modified basedOn { number tag parent createdAt } }
+
+  resourceFiles
+  unregisteredFiles: resourceFiles(unregistered: true)
+}

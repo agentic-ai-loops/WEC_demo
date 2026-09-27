@@ -23,6 +23,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from intelliw.businessdata import documents, queries
+from intelliw.businessdata.resources import UnsafePath, check_path, resource_file
 from intelliw.businessdata.schema import (
     ACTION_CHANNEL_KINDS,
     COLLECTIONS,
@@ -256,8 +257,12 @@ def _check_target(session: Session, target: EntityRef) -> None:
 
 
 def _check_asset_file(path: str, resources_dir: Path | None) -> None:
-    if resources_dir is not None and not (resources_dir / path).is_file():
-        raise Invalid(f"path: no file '{path}' under businessdata/resources/")
+    try:
+        check_path(path)
+        if resources_dir is not None and not resource_file(resources_dir, path).is_file():
+            raise Invalid(f"path: no file '{path}' under businessdata/resources/")
+    except UnsafePath as exc:
+        raise Invalid(str(exc)) from exc
 
 
 def _check_channel_users(session: Session, contact_id: str, kind: ContactKind) -> None:

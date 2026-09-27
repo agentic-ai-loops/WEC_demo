@@ -1,0 +1,27 @@
+# One reviews entity with every field; related entities one level deep.
+query Entity($id: ID!) {
+  reviewItem(id: $id) {
+    __typename id position version
+    status
+    target {
+      collection id field
+      entity {
+        __typename
+        ... on ContactPoint { id label hidden }
+        ... on Location { id name hidden }
+        ... on ServiceCategory { id name hidden }
+        ... on Service { id name hidden }
+        ... on ProductCategory { id name hidden }
+        ... on StaffMember { id name hidden }
+        ... on Faq { id question hidden }
+        ... on SocialLink { id label hidden }
+        ... on Affiliation { id name hidden }
+        ... on CustomerAction { id label hidden }
+        ... on Asset { __typename id path alt }
+        ... on Business { name }
+      }
+    }
+    note resolution
+    createdAt updatedAt
+  }
+}

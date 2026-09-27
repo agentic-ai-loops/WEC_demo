@@ -1,0 +1,5 @@
+{
+  "title": "Clinic (minimal)",
+  "description": "A minimal clinic design: home page, one page per service, contact details.",
+  "options": { "accent": "#1f6f8b" }
+}

@@ -1,0 +1,20 @@
+# An index of every entity, for every page: which entity pages exist (hidden ones only
+# with --include-hidden), the titles of references, and previous / next navigation.
+query Index {
+  business { __typename name favicon { __typename id path } }
+  contactPoints { __typename id label hidden }
+  locations { __typename id name hidden }
+  serviceCategories { __typename id name hidden }
+  services { __typename id name hidden }
+  productCategories { __typename id name hidden }
+  staff { __typename id name hidden }
+  faqs { __typename id question hidden }
+  socialLinks { __typename id label hidden }
+  affiliations { __typename id name hidden }
+  actions { __typename id label hidden }
+  assets { __typename id path }
+  reviews(status: null) { __typename id status }
+  snapshots { number }
+  trash { label }
+  resourceFiles
+}

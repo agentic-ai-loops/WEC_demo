@@ -8,7 +8,7 @@ Domain errors become GraphQL errors with a machine-readable `extensions.code`.
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any
+from typing import Annotated, Any
 
 import strawberry
 from graphql import GraphQLError
@@ -21,7 +21,7 @@ from intelliw.businessdata import schema as m
 from intelliw.businessdata.tables import ACTIVE
 from intelliw.graphql import inputs as i
 from intelliw.graphql import types as t
-from intelliw.graphql.context import Context
+from intelliw.graphql.context import Context, View
 
 ID = strawberry.ID
 
@@ -55,8 +55,25 @@ def _ctx(info: strawberry.Info) -> Context:
 
 
 def _version(info: strawberry.Info, version: int | None, snapshot: str | None) -> int:
+    """The version a query field reads; the context's default when neither is given."""
+    ctx = _ctx(info)
+    if version is None and snapshot is None:
+        return ctx.default_view.version
     with api_errors():
-        return queries.resolve_version(_ctx(info).session, version=version, snapshot=snapshot)
+        return queries.resolve_version(ctx.session, version=version, snapshot=snapshot)
+
+
+def _view(
+    info: strawberry.Info, version: int | None, snapshot: str | None, include_hidden: bool
+) -> View:
+    include_hidden = include_hidden or _ctx(info).default_view.include_hidden
+    return View(_version(info, version, snapshot), include_hidden)
+
+
+# Mutation results show the entities they changed, hidden or not.
+MUTATED = View(ACTIVE, include_hidden=True)
+
+INCLUDE_HIDDEN = "Include hidden entities, here and in nested fields (default: leave them out)."
 
 
 def _mutate[R](
@@ -83,8 +100,8 @@ def _mutate[R](
     return result
 
 
-def _wrap_all(models: list[Any], v: int) -> list[Any]:
-    return [t.wrap(x, v) for x in models]
+def _wrap_all(models: list[Any], view: View) -> list[Any]:
+    return [t.wrap(x, view) for x in models]
 
 
 def _delete_result(r: mutations.DeleteResult) -> t.DeleteResult:
@@ -186,6 +203,7 @@ def _typed(fn: Callable[..., Any], annotations: dict[str, Any]) -> Callable[...,
 
 
 VersionArgs = {"version": int | None, "snapshot": str | None}
+IncludeHidden = Annotated[bool, strawberry.argument(description=INCLUDE_HIDDEN)]
 
 
 def _collection_mutations(spec: Spec) -> dict[str, Any]:
@@ -203,7 +221,7 @@ def _collection_mutations(spec: Spec) -> dict[str, Any]:
                 version,
                 snapshot,
             ),
-            ACTIVE,
+            MUTATED,
         )
 
     def update(info, id, patch, version=None, snapshot=None):  # noqa: A002
@@ -217,7 +235,7 @@ def _collection_mutations(spec: Spec) -> dict[str, Any]:
                 version,
                 snapshot,
             ),
-            ACTIVE,
+            MUTATED,
         )
 
     def delete(info, id, version=None, snapshot=None):  # noqa: A002
@@ -232,12 +250,12 @@ def _collection_mutations(spec: Spec) -> dict[str, Any]:
 
     def move(info, id, before=None, version=None, snapshot=None):  # noqa: A002
         return _wrap_all(
-            _mutate(info, lambda s: mutations.move(s, c, id, before), version, snapshot), ACTIVE
+            _mutate(info, lambda s: mutations.move(s, c, id, before), version, snapshot), MUTATED
         )
 
     def reorder(info, ids, version=None, snapshot=None):
         return _wrap_all(
-            _mutate(info, lambda s: mutations.reorder(s, c, list(ids)), version, snapshot), ACTIVE
+            _mutate(info, lambda s: mutations.reorder(s, c, list(ids)), version, snapshot), MUTATED
         )
 
     info_t = {"info": strawberry.Info}
@@ -279,14 +297,23 @@ def _by_id_query(spec: Spec) -> Any:
     if spec.collection == "reviews":
         name = "reviewItem"
 
-    def resolve(info, id, version=None, snapshot=None):  # noqa: A002
-        v = _version(info, version, snapshot)
-        found = queries.get_entity(_ctx(info).session, spec.model, v, id)
-        return t.wrap(found, v) if found is not None else None
+    def resolve(info, id, include_hidden=False, version=None, snapshot=None):  # noqa: A002
+        view = _view(info, version, snapshot, include_hidden)
+        found = queries.get_entity(
+            _ctx(info).session, spec.model, view.version, id, include_hidden=view.include_hidden
+        )
+        return t.wrap(found, view) if found is not None else None
 
     return strawberry.field(
         resolver=_typed(
-            resolve, {"info": strawberry.Info, "id": ID, **VersionArgs, "return": out_type | None}
+            resolve,
+            {
+                "info": strawberry.Info,
+                "id": ID,
+                "include_hidden": IncludeHidden,
+                **VersionArgs,
+                "return": out_type | None,
+            },
         ),
         name=name,
     )
@@ -300,11 +327,14 @@ class Hello:
     message: str
 
 
-def _list(info, model, version, snapshot, hidden=None, **equals) -> list[Any]:
-    v = _version(info, version, snapshot)
+def _list(info, model, version, snapshot, include_hidden, **equals) -> list[Any]:
+    view = _view(info, version, snapshot, include_hidden)
+    hidden = None if view.include_hidden else False
     with api_errors():
-        found = queries.list_entities(_ctx(info).session, model, v, hidden=hidden, **equals)
-    return _wrap_all(found, v)
+        found = queries.list_entities(
+            _ctx(info).session, model, view.version, hidden=hidden, **equals
+        )
+    return _wrap_all(found, view)
 
 
 @strawberry.type
@@ -315,120 +345,126 @@ class BaseQuery:
 
     @strawberry.field
     def business(
-        self, info: strawberry.Info, version: int | None = None, snapshot: str | None = None
+        self,
+        info: strawberry.Info,
+        include_hidden: IncludeHidden = False,
+        version: int | None = None,
+        snapshot: str | None = None,
     ) -> t.Business:
-        v = _version(info, version, snapshot)
+        view = _view(info, version, snapshot, include_hidden)
         with api_errors():
-            return t.wrap(queries.get_business(_ctx(info).session, v), v)
+            return t.wrap(queries.get_business(_ctx(info).session, view.version), view)
 
     @strawberry.field
     def contact_points(
         self,
         info: strawberry.Info,
         kind: m.ContactKind | None = None,
-        hidden: bool | None = None,
+        include_hidden: IncludeHidden = False,
         version: int | None = None,
         snapshot: str | None = None,
     ) -> list[t.ContactPoint]:
         equals = {"kind": kind} if kind is not None else {}
-        return _list(info, m.ContactPoint, version, snapshot, hidden, **equals)
+        return _list(info, m.ContactPoint, version, snapshot, include_hidden, **equals)
 
     @strawberry.field
     def locations(
         self,
         info: strawberry.Info,
-        hidden: bool | None = None,
+        include_hidden: IncludeHidden = False,
         version: int | None = None,
         snapshot: str | None = None,
     ) -> list[t.Location]:
-        return _list(info, m.Location, version, snapshot, hidden)
+        return _list(info, m.Location, version, snapshot, include_hidden)
 
     @strawberry.field
     def service_categories(
         self,
         info: strawberry.Info,
-        hidden: bool | None = None,
+        include_hidden: IncludeHidden = False,
         version: int | None = None,
         snapshot: str | None = None,
     ) -> list[t.ServiceCategory]:
-        return _list(info, m.ServiceCategory, version, snapshot, hidden)
+        return _list(info, m.ServiceCategory, version, snapshot, include_hidden)
 
     @strawberry.field
     def services(
         self,
         info: strawberry.Info,
         category: ID | None = None,
-        hidden: bool | None = None,
+        include_hidden: IncludeHidden = False,
         version: int | None = None,
         snapshot: str | None = None,
     ) -> list[t.Service]:
         equals = {"category": category} if category is not None else {}
-        return _list(info, m.Service, version, snapshot, hidden, **equals)
+        return _list(info, m.Service, version, snapshot, include_hidden, **equals)
 
     @strawberry.field
     def product_categories(
         self,
         info: strawberry.Info,
-        hidden: bool | None = None,
+        include_hidden: IncludeHidden = False,
         version: int | None = None,
         snapshot: str | None = None,
     ) -> list[t.ProductCategory]:
-        return _list(info, m.ProductCategory, version, snapshot, hidden)
+        return _list(info, m.ProductCategory, version, snapshot, include_hidden)
 
     @strawberry.field
     def staff(
         self,
         info: strawberry.Info,
-        hidden: bool | None = None,
+        include_hidden: IncludeHidden = False,
         version: int | None = None,
         snapshot: str | None = None,
     ) -> list[t.StaffMember]:
-        return _list(info, m.StaffMember, version, snapshot, hidden)
+        return _list(info, m.StaffMember, version, snapshot, include_hidden)
 
     @strawberry.field
     def faqs(
         self,
         info: strawberry.Info,
         service: ID | None = None,
-        hidden: bool | None = None,
+        include_hidden: IncludeHidden = False,
         version: int | None = None,
         snapshot: str | None = None,
     ) -> list[t.Faq]:
-        v = _version(info, version, snapshot)
         if service is None:
-            return _list(info, m.Faq, version, snapshot, hidden)
-        (found,) = queries.faqs_by_service(_ctx(info).session, v, [service])
-        return _wrap_all([f for f in found if hidden is None or f.hidden == hidden], v)
+            return _list(info, m.Faq, version, snapshot, include_hidden)
+        view = _view(info, version, snapshot, include_hidden)
+        (found,) = queries.faqs_by_service(
+            _ctx(info).session, view.version, [service], include_hidden=view.include_hidden
+        )
+        return _wrap_all(found, view)
 
     @strawberry.field
     def social_links(
         self,
         info: strawberry.Info,
-        hidden: bool | None = None,
+        include_hidden: IncludeHidden = False,
         version: int | None = None,
         snapshot: str | None = None,
     ) -> list[t.SocialLink]:
-        return _list(info, m.SocialLink, version, snapshot, hidden)
+        return _list(info, m.SocialLink, version, snapshot, include_hidden)
 
     @strawberry.field
     def affiliations(
         self,
         info: strawberry.Info,
-        hidden: bool | None = None,
+        include_hidden: IncludeHidden = False,
         version: int | None = None,
         snapshot: str | None = None,
     ) -> list[t.Affiliation]:
-        return _list(info, m.Affiliation, version, snapshot, hidden)
+        return _list(info, m.Affiliation, version, snapshot, include_hidden)
 
     @strawberry.field
     def actions(
         self,
         info: strawberry.Info,
-        hidden: bool | None = None,
+        include_hidden: IncludeHidden = False,
         version: int | None = None,
         snapshot: str | None = None,
     ) -> list[t.CustomerAction]:
-        return _list(info, m.CustomerAction, version, snapshot, hidden)
+        return _list(info, m.CustomerAction, version, snapshot, include_hidden)
 
     @strawberry.field
     def assets(
@@ -436,16 +472,21 @@ class BaseQuery:
         info: strawberry.Info,
         type: m.AssetType | None = None,  # noqa: A002
         unused: bool | None = None,
+        include_hidden: IncludeHidden = False,
         version: int | None = None,
         snapshot: str | None = None,
     ) -> list[t.Asset]:
-        v = _version(info, version, snapshot)
+        view = _view(info, version, snapshot, include_hidden)
         session = _ctx(info).session
-        found = queries.list_entities(session, m.Asset, v, **({"type": type} if type else {}))
+        equals = {"type": type} if type else {}
+        found = queries.list_entities(session, m.Asset, view.version, **equals)
         if unused is not None:
-            usage = queries.asset_usage(session, v, [a.id for a in found])
+            ids = [a.id for a in found]
+            usage = queries.asset_usage(
+                session, view.version, ids, include_hidden=view.include_hidden
+            )
             found = [a for a, used in zip(found, usage, strict=True) if (not used) == unused]
-        return _wrap_all(found, v)
+        return _wrap_all(found, view)
 
     @strawberry.field(description="Paths under businessdata/resources/.")
     def resource_files(
@@ -471,11 +512,14 @@ class BaseQuery:
         self,
         info: strawberry.Info,
         status: m.ReviewStatus | None = m.ReviewStatus.open,
+        include_hidden: IncludeHidden = False,
         version: int | None = None,
         snapshot: str | None = None,
     ) -> list[t.ReviewItem]:
         equals = {"status": status} if status is not None else {}
-        return _list(info, m.ReviewItem, version, snapshot, **equals)
+        view = _view(info, version, snapshot, include_hidden)
+        found = queries.list_entities(_ctx(info).session, m.ReviewItem, view.version, **equals)
+        return _wrap_all(found, view)
 
     @strawberry.field(description="Deleted entities awaiting purge, newest first.")
     def trash(
@@ -525,7 +569,7 @@ class BaseMutation:
         business = _mutate(
             info, lambda s: mutations.update_business(s, i.to_fields(patch)), version, snapshot
         )
-        return t.wrap(business, ACTIVE)
+        return t.wrap(business, MUTATED)
 
     @strawberry.mutation(description="Replace one day's hours; other days are untouched.")
     def set_opening_hours(
@@ -545,7 +589,7 @@ class BaseMutation:
             version,
             snapshot,
         )
-        return t.wrap(result, ACTIVE)
+        return t.wrap(result, MUTATED)
 
     @strawberry.mutation(description="Raise a question for the #owner.")
     def create_review(
@@ -559,7 +603,7 @@ class BaseMutation:
         ref = m.EntityRef.model_validate(i.to_fields(target))
         return t.wrap(
             _mutate(info, lambda s: mutations.create_review(s, ref, note), version, snapshot),
-            ACTIVE,
+            MUTATED,
         )
 
     @strawberry.mutation
@@ -573,7 +617,7 @@ class BaseMutation:
     ) -> t.ReviewItem:
         return t.wrap(
             _mutate(info, lambda s: mutations.resolve_review(s, id, resolution), version, snapshot),
-            ACTIVE,
+            MUTATED,
         )
 
     @strawberry.mutation
@@ -587,7 +631,7 @@ class BaseMutation:
     ) -> t.ReviewItem:
         return t.wrap(
             _mutate(info, lambda s: mutations.dismiss_review(s, id, reason), version, snapshot),
-            ACTIVE,
+            MUTATED,
         )
 
     @strawberry.mutation
@@ -599,7 +643,7 @@ class BaseMutation:
         snapshot: str | None = None,
     ) -> t.ReviewItem:
         return t.wrap(
-            _mutate(info, lambda s: mutations.reopen_review(s, id), version, snapshot), ACTIVE
+            _mutate(info, lambda s: mutations.reopen_review(s, id), version, snapshot), MUTATED
         )
 
     @strawberry.mutation(description="Freeze the active version into a new read-only snapshot.")

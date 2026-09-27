@@ -1,0 +1,10 @@
+# One actions entity with every field; related entities one level deep.
+query Entity($id: ID!) {
+  customerAction(id: $id) {
+    __typename id position hidden version
+    type label href
+    channel { __typename id kind label value href hidden }
+    services { __typename id name summary hidden }
+    createdAt updatedAt
+  }
+}

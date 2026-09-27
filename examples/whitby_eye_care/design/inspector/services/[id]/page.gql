@@ -1,0 +1,13 @@
+# One services entity with every field; related entities one level deep.
+query Entity($id: ID!) {
+  service(id: $id) {
+    __typename id position hidden version
+    name summary description audience
+    category { __typename id name hidden }
+    image { __typename id type path alt }
+    faqs { __typename id question answer hidden }
+    actions { __typename id type label href hidden }
+    reviews { __typename id status note }
+    createdAt updatedAt
+  }
+}

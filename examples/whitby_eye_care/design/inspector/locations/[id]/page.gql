@@ -1,0 +1,14 @@
+# One locations entity with every field; related entities one level deep.
+query Entity($id: ID!) {
+  location(id: $id) {
+    __typename id position hidden version
+    name
+    address { street city region postalCode country }
+    geo { lat lng }
+    mapUrl
+    hours { day seq open close closed }
+    phone { __typename id kind label value href hidden }
+    reviews { __typename id status note }
+    createdAt updatedAt
+  }
+}

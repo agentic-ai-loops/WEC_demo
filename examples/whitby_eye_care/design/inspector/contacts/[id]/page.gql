@@ -1,0 +1,10 @@
+# One contacts entity with every field; related entities one level deep.
+query Entity($id: ID!) {
+  contactPoint(id: $id) {
+    __typename id position hidden version
+    kind label value primary href
+    usedBy { __typename id type label href hidden }
+    reviews { __typename id status note }
+    createdAt updatedAt
+  }
+}

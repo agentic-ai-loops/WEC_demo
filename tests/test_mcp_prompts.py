@@ -114,6 +114,11 @@ async def test_dashboard_queries_run_on_the_sample(name, engine, session):
         ctx = Context(session_factory(engine))
         result = await schema.execute(block, context_value=ctx)
         assert result.errors is None, result.errors
+        # hidden records are counted and reported, so the queries must include them
+        if "contactPoints" in (result.data or {}):
+            assert {"appointments-email"} <= {c["id"] for c in result.data["contactPoints"]}
+        if "staff" in (result.data or {}):
+            assert "dr-raniero-fernando" in {s["id"] for s in result.data["staff"]}
 
 
 # ---- shared guidance -----------------------------------------------------------------

@@ -1,0 +1,2 @@
+# One page per reviews entity.
+query { reviews(status: null) { id } }

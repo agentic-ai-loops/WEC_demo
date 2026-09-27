@@ -4,8 +4,9 @@ from typing import Any
 import pytest
 from conftest import QueryCounter
 
+from intelliw.businessdata import documents
 from intelliw.businessdata.database import session_factory
-from intelliw.graphql.context import Context
+from intelliw.graphql.context import Context, View
 from intelliw.graphql.schema import schema
 
 
@@ -93,18 +94,71 @@ async def test_contact_point_used_by_and_href(api):
     assert data["contactPoint"] == {"href": "tel:9056556236", "usedBy": [{"id": "call-clinic"}]}
 
 
-async def test_hidden_filter_and_deleted_exclusion(api):
-    data, _ = await api("{ contactPoints(hidden: true) { id } staff { id } }")
-    assert data["contactPoints"] == [{"id": "appointments-email"}]
+async def test_hidden_excluded_by_default_and_deleted_always(api):
+    data, _ = await api("""{ contactPoints { id }
+        all: contactPoints(includeHidden: true) { id hidden }
+        staff { id }
+        contactPoint(id: "appointments-email") { id }
+        shown: contactPoint(id: "appointments-email", includeHidden: true) { hidden } }""")
+    assert "appointments-email" not in [c["id"] for c in data["contactPoints"]]
+    assert {"id": "appointments-email", "hidden": True} in data["all"]
     assert [s["id"] for s in data["staff"]] == ["dr-raniero-fernando", "dr-andrea-chan"]
-    data, _ = await api('{ staffMember(id: "dr-peter-chan") { id } }')
+    assert data["contactPoint"] is None
+    assert data["shown"] == {"hidden": True}
+    data, _ = await api('{ staffMember(id: "dr-peter-chan", includeHidden: true) { id } }')
     assert data["staffMember"] is None
+
+
+async def test_hidden_entities_are_left_out_of_nested_fields(api):
+    data, errors = await api("""mutation {
+        a: updateService(id: "dry-eye-testing", patch: {hidden: true}) { id hidden }
+        b: updateStaffMember(id: "dr-raniero-fernando", patch: {hidden: true}) { hidden }
+        c: updateServiceCategory(id: "eye-health", patch: {hidden: true}) { hidden } }""")
+    assert errors == []
+    assert data["a"] == {"id": "dry-eye-testing", "hidden": True}  # mutations show hidden
+    query = """query($h: Boolean!) {
+        serviceCategories(includeHidden: $h) { id services { id } }
+        customerAction(id: "book-appointment", includeHidden: $h) { services { id } }
+        service(id: "computer-related-eye-strain", includeHidden: $h) { category { id hidden } }
+        asset(id: "dr-raniero-fernando", includeHidden: $h) { usedBy { id } }
+        assets(unused: true, includeHidden: $h) { id } }"""
+    data, errors = await api(query, h=False)
+    assert errors == []
+    assert data["serviceCategories"] == [{"id": "eye-exams", "services": [{"id": "eye-exams"}]}]
+    assert data["customerAction"]["services"] == [{"id": "eye-exams"}]
+    # a required reference resolves even to a hidden entity
+    assert data["service"]["category"] == {"id": "eye-health", "hidden": True}
+    assert data["asset"]["usedBy"] == []
+    assert {"dr-raniero-fernando", "dry-eye-device"} <= {a["id"] for a in data["assets"]}
+    data, errors = await api(query, h=True)
+    assert errors == []
+    assert [c["id"] for c in data["serviceCategories"]] == ["eye-exams", "eye-health"]
+    assert data["serviceCategories"][1]["services"] == [
+        {"id": "dry-eye-testing"},
+        {"id": "computer-related-eye-strain"},
+    ]
+    assert data["customerAction"]["services"] == [{"id": "eye-exams"}, {"id": "dry-eye-testing"}]
+    assert data["asset"]["usedBy"] == [{"id": "dr-raniero-fernando"}]
+    assert [a["id"] for a in data["assets"]] == ["unused-photo"]
+
+
+async def test_review_targets_follow_include_hidden(api):
+    await api('mutation { updateContactPoint(id: "booking", patch: {hidden: true}) { id } }')
+    query = """query($h: Boolean!) {
+        reviews(status: null, includeHidden: $h) { id target { entity { __typename } } } }"""
+    data, _ = await api(query, h=False)
+    targets = {r["id"]: r["target"]["entity"] for r in data["reviews"]}
+    assert targets["booking-system"] is None
+    assert targets["legal-name"] == {"__typename": "Business"}
+    data, _ = await api(query, h=True)
+    targets = {r["id"]: r["target"]["entity"] for r in data["reviews"]}
+    assert targets["booking-system"] == {"__typename": "ContactPoint"}
 
 
 async def test_filters(api):
     data, _ = await api("""{ services(category: "eye-health") { id }
         faqs(service: "computer-related-eye-strain") { id }
-        contactPoints(kind: email) { id } }""")
+        contactPoints(kind: email, includeHidden: true) { id } }""")
     assert [s["id"] for s in data["services"]] == ["dry-eye-testing", "computer-related-eye-strain"]
     assert data["faqs"] == [{"id": "reducing-computer-eye-strain"}]
     assert [c["id"] for c in data["contactPoints"]] == ["info-email", "appointments-email"]
@@ -356,7 +410,9 @@ async def test_hiding_a_referenced_entity_keeps_references(api):
         'mutation { updateContactPoint(id: "main-phone", patch: {hidden: true}) { hidden } }'
     )
     assert errors == [] and data["updateContactPoint"] == {"hidden": True}
-    data, _ = await api('{ location(id: "whitby") { phone { id hidden } } }')
+    data, _ = await api('{ location(id: "whitby") { phone { id } } }')
+    assert data["location"]["phone"] is None  # hidden without includeHidden
+    data, _ = await api('{ location(id: "whitby", includeHidden: true) { phone { id hidden } } }')
     assert data["location"]["phone"] == {"id": "main-phone", "hidden": True}
 
 
@@ -379,3 +435,37 @@ async def test_position_is_exposed_and_follows_the_order(api):
     data, _ = await api('mutation { restoreStaffMember(id: "dr-peter-chan") { id } }')
     data, _ = await api('{ staffMember(id: "dr-peter-chan") { position } }')
     assert data["staffMember"]["position"] == 2  # restored to the end
+
+
+async def test_context_default_view_applies_to_omitted_arguments(engine, session):
+    """The renderer's view: a snapshot and hidden entities, unless a field says otherwise."""
+    documents.take_snapshot(session, "two")  # snapshot 2, with appointments-email hidden
+    session.commit()
+    query = "{ business { version } contactPoints { id } one: business(version: 1) { version } }"
+    ctx = Context(session_factory(engine), default_view=View(2, include_hidden=True))
+    result = await schema.execute(query, context_value=ctx)
+    assert result.errors is None, result.errors
+    assert result.data["business"] == {"version": 2}
+    assert "appointments-email" in [c["id"] for c in result.data["contactPoints"]]
+    assert result.data["one"] == {"version": 1}  # an explicit argument wins
+
+
+@pytest.mark.parametrize("path", ["/etc/passwd", "../outside.png", "a/../../x.png", ".env"])
+async def test_asset_paths_must_stay_in_resources(api, path):
+    create = """mutation($path: String!) {
+        createAsset(input: {id: "x", type: photo, path: $path}) { id } }"""
+    data, errors = await api(create, path=path)
+    assert codes(errors) == ["VALIDATION"], errors
+    update = 'mutation($path: String!) { updateAsset(id: "logo", patch: {path: $path}) { id } }'
+    data, errors = await api(update, path=path)
+    assert codes(errors) == ["VALIDATION"], errors
+
+
+async def test_asset_symlink_out_of_resources_is_refused(api, resources, tmp_path_factory):
+    outside = tmp_path_factory.mktemp("outside") / "secret.png"
+    outside.write_bytes(b"secret")
+    (resources / "link.png").symlink_to(outside)
+    data, errors = await api(
+        'mutation { createAsset(input: {id: "x", type: photo, path: "link.png"}) { id } }'
+    )
+    assert codes(errors) == ["VALIDATION"] and "outside" in errors[0]["message"]

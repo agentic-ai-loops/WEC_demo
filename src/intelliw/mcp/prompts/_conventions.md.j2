@@ -10,6 +10,12 @@
 - **Deleting is reversible.** A deleted entity disappears from every query; `trash` lists
   deleted entities and `restore<Entity>(id)` brings one back.
 - **Hidden entities** stay in the data but are left off the website (`hidden: true`).
+  Queries leave them out by default — from lists, from nested lists, and from optional
+  references (which read as `null`). Pass `includeHidden: true` to a query field to see
+  them, there and in everything nested under it. Required references (a service's
+  `category`, an action's `channel`) always resolve. Mutation results always show the
+  changed records, hidden or not. When the owner asks about *their data* (not the
+  website), include hidden records and say which ones are hidden.
 - **Review items** are open questions for the owner about specific data. Ask the owner,
   then `resolveReview` or `dismissReview`.
 - **Images** are uploaded by the owner in the web interface; `createAsset` registers an

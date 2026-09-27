@@ -1,0 +1,9 @@
+# One assets entity with every field; related entities one level deep.
+query Entity($id: ID!) {
+  asset(id: $id) {
+    __typename id position version
+    type path alt
+    usedBy { collection id field }
+    createdAt updatedAt
+  }
+}

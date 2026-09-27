@@ -1,0 +1,12 @@
+{
+  "name": "intelliw-local",
+  "description": "Claude Code plugins that ship with the intelliw repository.",
+  "owner": { "name": "Ken Pu" },
+  "plugins": [
+    {
+      "name": "intelliw",
+      "source": "./plugins/intelliw",
+      "description": "Tools for intelliw workspaces: author #design bundles for the renderer."
+    }
+  ]
+}

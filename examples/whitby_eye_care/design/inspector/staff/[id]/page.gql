@@ -1,0 +1,10 @@
+# One staff entity with every field; related entities one level deep.
+query Entity($id: ID!) {
+  staffMember(id: $id) {
+    __typename id position hidden version
+    name role credentials bio languages
+    photo { __typename id type path alt }
+    reviews { __typename id status note }
+    createdAt updatedAt
+  }
+}

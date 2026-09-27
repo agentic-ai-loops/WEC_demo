@@ -1,0 +1,114 @@
+{% extends "_layouts/base.html.j2" %}
+{#- The index: every collection as a grid of cards; titles and references lead to the
+    entity pages. -#}
+{% block main %}
+{%- import "_partials/values.html.j2" as show with context -%}
+{%- set d = data -%}
+{#- (anchor, title, rows, wide cards) -#}
+{%- set SECTIONS = [
+  ("contacts", "Contact points", d.contactPoints, False),
+  ("locations", "Locations", d.locations, True),
+  ("service-categories", "Service categories", d.serviceCategories, False),
+  ("services", "Services", d.services, True),
+  ("product-categories", "Product categories", d.productCategories, False),
+  ("staff", "Staff", d.staff, True),
+  ("faqs", "FAQs", d.faqs, True),
+  ("social-links", "Social links", d.socialLinks, False),
+  ("affiliations", "Affiliations", d.affiliations, False),
+  ("actions", "Customer actions", d.actions, False),
+] -%}
+{%- set registered = d.assets | map(attribute="path") | list -%}
+    {#- the business: its identity up front, then everything else -#}
+    <section id="overview" class="panel">
+      <h2><span class="t">Business</span> <span class="dim type">Business · singleton</span></h2>
+      <article class="card hero" id="Business">
+        <header>
+          {% if d.business.logo %}<img class="logo" src="{{ asset_url(d.business.logo) }}" alt="{{ d.business.name }} logo">{% endif %}
+          <div>
+            <h3 data-field="name"><a class="title-link" href="{{ url('business/') }}">{{ d.business.name }}</a></h3>
+            <p class="tagline" data-field="tagline">{{ d.business.tagline }}</p>
+          </div>
+        </header>
+        {{ show.fields(d.business, skip=show.META + ["name", "tagline"]) }}
+        <footer class="meta">
+          {%- for key in show.META if key in d.business %}<span data-field="{{ key }}"><span class="k">{{ key }}</span> {{ show.value(d.business[key]) }}</span>{% endfor -%}
+        </footer>
+      </article>
+    </section>
+
+    <section id="versions" class="panel">
+      <h2><span class="t">Versions</span> <span class="count">{{ d.snapshots | length }}</span> <span class="dim type">ActiveVersion · Snapshot</span></h2>
+      <div class="split">
+        <div class="card">
+          <header><h3>activeVersion</h3><div class="badges">{% if d.activeVersion.modified %}<span class="badge b-open">modified</span>{% else %}<span class="badge b-shown">saved</span>{% endif %}</div></header>
+          {{ show.fields(d.activeVersion) }}
+        </div>
+        <div class="card">
+          <header><h3>snapshots</h3></header>
+          {{ show.table(d.snapshots) }}
+        </div>
+      </div>
+    </section>
+
+    {% for key, title, rows, wide in SECTIONS %}
+    <section id="{{ key }}" class="panel">
+      <h2><span class="t">{{ title }}</span> <span class="count">{{ rows | length }}</span>
+        {% set hidden = rows | selectattr("hidden") | list | length %}
+        {% if hidden %}<span class="chip off">{{ hidden }} hidden</span>{% endif %}
+        {% if rows %}<span class="dim type">{{ rows[0].__typename }}</span>{% endif %}
+      </h2>
+      {{ show.cards(rows, wide) }}
+    </section>
+    {% endfor %}
+
+    <section id="assets" class="panel">
+      <h2><span class="t">Assets</span> <span class="count">{{ d.assets | length }}</span> <span class="dim type">Asset</span></h2>
+      <div class="cards">
+        {% for a in d.assets %}
+        <div class="asset">
+          <a class="preview" href="{{ asset_url(a) }}"><img src="{{ asset_url(a) }}" alt="{{ a.alt }}" loading="lazy"></a>
+          {{ show.card(a) }}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section id="resources" class="panel">
+      <h2><span class="t">Resource files</span> <span class="count">{{ d.resourceFiles | length }}</span> <span class="dim type">businessdata/resources/</span></h2>
+      <div class="files">
+        {% for f in d.resourceFiles %}
+        <div class="file">
+          {% if f in registered %}<img class="thumb" src="{{ asset_url({'path': f}) }}" alt="" loading="lazy">{% else %}<span class="thumb none">?</span>{% endif %}
+          <div>
+            <span class="v-str">{{ f }}</span><br>
+            {% if f in registered %}<span class="v-bool v-true">asset in this version</span>{% elif f in d.unregisteredFiles %}<span class="v-bool v-false">unregistered · not published</span>{% else %}<span class="dim">used by a snapshot only · not published</span>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="fields">{{ show.field("unregisteredFiles", d.unregisteredFiles) }}</div>
+    </section>
+
+    <section id="reviews" class="panel">
+      <h2><span class="t">Review items</span> <span class="count">{{ d.reviews | length }}</span>
+        {% set open = d.reviews | selectattr("status", "equalto", "open") | list | length %}
+        {% if open %}<span class="chip warn">{{ open }} open</span>{% endif %}
+        <span class="dim type">ReviewItem</span></h2>
+      {{ show.cards(d.reviews, True) }}
+    </section>
+
+    <section id="trash" class="panel">
+      <h2><span class="t">Trash</span> <span class="count">{{ d.trash | length }}</span> <span class="dim type">TrashItem</span></h2>
+      {% if d.trash %}
+      <div class="cards">{% for item in d.trash %}
+        <article class="card"><header><h3 data-field="label">{{ item.label }}</h3></header>{{ show.fields(item, skip=["label"]) }}</article>
+      {% endfor %}</div>
+      {% else %}<p class="empty">No records.</p>{% endif %}
+    </section>
+
+    <section id="render" class="panel">
+      <h2><span class="t">Render</span> <span class="dim type"><a href="{{ url('render.json') }}">render.json</a></span></h2>
+      <div class="card">{{ show.fields(render) }}</div>
+    </section>
+
+{% endblock %}

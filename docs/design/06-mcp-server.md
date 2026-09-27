@@ -68,7 +68,9 @@ The server's instructions tell the agent to read the schema, use `graphql_query`
 - `takeSnapshot` before a batch of changes, `activateVersion` to undo (unsaved changes are
   kept in an automatic snapshot);
 - patches: omitted = unchanged, `null` = clear;
-- soft delete with `trash` / `restore<Entity>`; `hidden` keeps an entity off the site;
+- soft delete with `trash` / `restore<Entity>`; `hidden` keeps an entity off the site,
+  and queries leave hidden entities out unless given `includeHidden: true` — prompts that
+  report on the owner's data (overview, explore, concerns) pass it;
 - review items are questions for the owner — ask, then resolve or dismiss;
 - files are uploaded by the owner in the web interface; `createAsset` registers them;
 - the error codes.

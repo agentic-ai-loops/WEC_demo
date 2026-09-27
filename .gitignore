@@ -8,6 +8,7 @@ build/
 *.egg-info/
 # generated sites
 _site/
+outputs/
 
 # local config (see .env.example)
 .env

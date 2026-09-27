@@ -12,16 +12,17 @@ AGENT.md              Project premise (top-level context for agents)
 docs/design/          Design documents, one per component; used as prompts
 src/intelliw/
   businessdata/       #businessdata: fixed schema + storage of owner content/resources
-  design/             #design: jinja2 templates + assets
-  site/               #site: rendering businessdata x design -> static site
+  render/             #design: design bundles, the design check, rendering the #site
   graphql/            Strawberry GraphQL schema + server (workhorse for #businessdata)
   mcp/                MCP server exposing the above to owner agents
-  cli/                typer CLIs: `adm` (site), `svr` (servers), `client-cli` (test client),
-                      `business` (inspect #businessdata)
+  cli/                typer CLIs: `svr` (servers), `client-cli` (test client),
+                      `business` (inspect #businessdata), `render` (render the #site)
   config.py           Settings from environment / .env
   checks.py           Health checks used by `svr`
   workspace.py        Filesystem layout of one owner's workspace
-examples/demo/        A sample workspace (businessdata + design)
+examples/whitby_eye_care/   Sample workspace: businessdata (run `make reimport`) + designs
+                      `clinic` (minimal site) and `inspector` (all data, one page)
+examples/demo/        A minimal business.json document
 tests/                pytest suite
 ```
 
@@ -31,8 +32,16 @@ tests/                pytest suite
 uv sync                                   # install deps
 uv run pytest                             # run tests
 uv run ruff check . && uv run ruff format .
-uv run adm build examples/demo                 # render examples/demo/_site
+uv run render --design clinic            # WORKSPACE from .env -> outputs/active/ (--dryrun: write nothing)
 ```
+
+## Claude Code plugin
+
+`plugins/intelliw/` is a Claude Code plugin, listed by the repo-local marketplace in
+`.claude-plugin/marketplace.json`. Its skill `/intelliw:design <workspace> <design-doc>…`
+builds a #design bundle from design documents, then checks and renders it. Enable it once
+with `/plugin marketplace add ./` and `/plugin install intelliw@intelliw-local`, or start
+a session with `claude --plugin-dir plugins/intelliw`.
 
 ## Make targets
 

@@ -7,14 +7,15 @@ Designed for the GraphQL resolvers (docs/design/02-graphql-api.md):
 - batch functions take a sequence of keys and return one result per key, in key order —
   the contract of a DataLoader load function — using one query per call;
 - deleted entities are excluded unless `include_deleted=True`; hidden entities are
-  included unless filtered with `hidden=`.
+  included unless `include_hidden=False` (or filtered with `hidden=` in `list_entities`).
 """
 
 from collections import defaultdict
 from collections.abc import Hashable, Iterable, Sequence
+from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Select, select, tuple_
+from sqlalchemy import Select, func, select, tuple_
 from sqlalchemy.orm import Session
 
 from intelliw.businessdata.schema import (
@@ -56,6 +57,7 @@ __all__ = [
     "resolve_version",
     "get_version_index",
     "list_snapshots",
+    "latest_update",
     "get_business",
     "list_entities",
     "get_entity",
@@ -123,6 +125,19 @@ def get_version_index(session: Session) -> VersionIndex:
     )
 
 
+def latest_update(session: Session, version: int = ACTIVE) -> datetime | None:
+    """The latest `updated_at` in a version: the business and its non-deleted entities."""
+    stmts: list[Select[Any]] = [
+        select(func.max(BusinessRow.updated_at)).where(BusinessRow.version == version)
+    ]
+    for row in COLLECTION_ROWS.values():
+        stmts.append(
+            select(func.max(row.updated_at)).where(row.version == version, row.deleted.is_(False))
+        )
+    found = [t for t in (session.scalar(s) for s in stmts) if t is not None]
+    return max(found, default=None)
+
+
 # ---- entities -----------------------------------------------------------------------
 
 
@@ -133,10 +148,14 @@ def get_business(session: Session, version: int = ACTIVE) -> Business:
     return Business.model_validate(row)
 
 
-def _entity_select[R: EntityRow](row: type[R], version: int, include_deleted: bool) -> Select[R]:
+def _entity_select[R: EntityRow](
+    row: type[R], version: int, include_deleted: bool, include_hidden: bool = True
+) -> Select[R]:
     stmt = select(row).where(row.version == version)
     if not include_deleted:
         stmt = stmt.where(row.deleted.is_(False))
+    if not include_hidden and issubclass(row, HideableRow):
+        stmt = stmt.where(row.hidden.is_(False))
     return stmt
 
 
@@ -172,18 +191,33 @@ def get_entities[E: Entity](
     ids: Sequence[str],
     *,
     include_deleted: bool = False,
+    include_hidden: bool = True,
 ) -> list[E | None]:
-    """Entities by id, one per id in order; `None` for missing (or deleted) ids."""
+    """Entities by id, one per id in order; `None` for missing (deleted, hidden) ids."""
     row = _row_class(model)
-    stmt = _entity_select(row, version, include_deleted).where(row.id.in_(set(ids)))
+    stmt = _entity_select(row, version, include_deleted, include_hidden)
+    stmt = stmt.where(row.id.in_(set(ids)))
     found = {r.id: model.model_validate(r) for r in session.scalars(stmt)}
     return [found.get(i) for i in ids]
 
 
 def get_entity[E: Entity](
-    session: Session, model: type[E], version: int, id: str, *, include_deleted: bool = False
+    session: Session,
+    model: type[E],
+    version: int,
+    id: str,
+    *,
+    include_deleted: bool = False,
+    include_hidden: bool = True,
 ) -> E | None:
-    return get_entities(session, model, version, [id], include_deleted=include_deleted)[0]
+    return get_entities(
+        session,
+        model,
+        version,
+        [id],
+        include_deleted=include_deleted,
+        include_hidden=include_hidden,
+    )[0]
 
 
 # ---- reverse relations (batched) ---------------------------------------------------
@@ -197,11 +231,11 @@ def _grouped[K: Hashable, V](pairs: Iterable[tuple[K, V]], keys: Sequence[K]) ->
 
 
 def services_by_category(
-    session: Session, version: int, category_ids: Sequence[str]
+    session: Session, version: int, category_ids: Sequence[str], *, include_hidden: bool = True
 ) -> list[list[Service]]:
     """`ServiceCategory.services`, per category id."""
     stmt = (
-        _entity_select(ServiceRow, version, False)
+        _entity_select(ServiceRow, version, False, include_hidden)
         .where(ServiceRow.category.in_(set(category_ids)))
         .order_by(ServiceRow.position)
     )
@@ -209,7 +243,9 @@ def services_by_category(
     return _grouped(((r.category, Service.model_validate(r)) for r in rows), category_ids)
 
 
-def faqs_by_service(session: Session, version: int, service_ids: Sequence[str]) -> list[list[Faq]]:
+def faqs_by_service(
+    session: Session, version: int, service_ids: Sequence[str], *, include_hidden: bool = True
+) -> list[list[Faq]]:
     """`Service.faqs`, per service id, in FAQ position order."""
     stmt = (
         select(FaqServiceRow.service_id, FaqRow)
@@ -224,12 +260,14 @@ def faqs_by_service(session: Session, version: int, service_ids: Sequence[str]) 
         )
         .order_by(FaqRow.position)
     )
+    if not include_hidden:
+        stmt = stmt.where(FaqRow.hidden.is_(False))
     rows = session.execute(stmt)
     return _grouped(((sid, Faq.model_validate(r)) for sid, r in rows), service_ids)
 
 
 def actions_by_service(
-    session: Session, version: int, service_ids: Sequence[str]
+    session: Session, version: int, service_ids: Sequence[str], *, include_hidden: bool = True
 ) -> list[list[CustomerAction]]:
     """`Service.actions`, per service id, in action position order."""
     stmt = (
@@ -246,16 +284,18 @@ def actions_by_service(
         )
         .order_by(CustomerActionRow.position)
     )
+    if not include_hidden:
+        stmt = stmt.where(CustomerActionRow.hidden.is_(False))
     rows = session.execute(stmt)
     return _grouped(((sid, CustomerAction.model_validate(r)) for sid, r in rows), service_ids)
 
 
 def actions_by_channel(
-    session: Session, version: int, contact_ids: Sequence[str]
+    session: Session, version: int, contact_ids: Sequence[str], *, include_hidden: bool = True
 ) -> list[list[CustomerAction]]:
     """`ContactPoint.usedBy`, per contact point id."""
     stmt = (
-        _entity_select(CustomerActionRow, version, False)
+        _entity_select(CustomerActionRow, version, False, include_hidden)
         .where(CustomerActionRow.channel.in_(set(contact_ids)))
         .order_by(CustomerActionRow.position)
     )
@@ -301,8 +341,11 @@ _ASSET_REFERENCES: list[tuple[str, type[Any], str, str]] = [
 ]
 
 
-def asset_usage(session: Session, version: int, asset_ids: Sequence[str]) -> list[list[EntityRef]]:
-    """`Asset.usedBy`, per asset id: the non-deleted entities referencing it.
+def asset_usage(
+    session: Session, version: int, asset_ids: Sequence[str], *, include_hidden: bool = True
+) -> list[list[EntityRef]]:
+    """`Asset.usedBy`, per asset id: the non-deleted (and, optionally, non-hidden)
+    entities referencing it.
 
     An asset with no usage is unused (`assets(unused: true)`).
     """
@@ -313,6 +356,8 @@ def asset_usage(session: Session, version: int, asset_ids: Sequence[str]) -> lis
         stmt: Select[Any] = select(row).where(row.version == version, col.in_(wanted))
         if row is not BusinessRow:
             stmt = stmt.where(row.deleted.is_(False))
+            if not include_hidden:
+                stmt = stmt.where(row.hidden.is_(False))
         for r in session.scalars(stmt):
             entity_id = None if row is BusinessRow else r.id
             ref = EntityRef.model_validate(

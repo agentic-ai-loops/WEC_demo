@@ -28,14 +28,14 @@ class Workspace:
     def design_dir(self) -> Path:
         return self.root / "design"
 
-    @property
-    def templates_dir(self) -> Path:
-        return self.design_dir / "templates"
+    def design(self, name: str) -> Path:
+        """The folder of the design bundle `name` (docs/design/04-design.md)."""
+        return self.design_dir / name
 
     @property
-    def assets_dir(self) -> Path:
-        return self.design_dir / "assets"
+    def outputs_dir(self) -> Path:
+        return self.root / "outputs"
 
-    @property
-    def site_dir(self) -> Path:
-        return self.root / "_site"
+    def output_dir(self, version_name: str) -> Path:
+        """Where a render of one #businessdata version goes: `outputs/<version_name>/`."""
+        return self.outputs_dir / version_name

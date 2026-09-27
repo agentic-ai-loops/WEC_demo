@@ -1,0 +1,2 @@
+# One page per staff entity.
+query { staff { id } }

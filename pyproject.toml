@@ -9,6 +9,7 @@ requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.28.1",
     "jinja2>=3.1.6",
+    "livereload>=2.7.1",
     "mcp>=2.2.0",
     "pydantic>=2.13.5",
     "python-dotenv>=1.2.3",
@@ -19,10 +20,10 @@ dependencies = [
 ]
 
 [project.scripts]
-adm = "intelliw.cli.adm:app"
 svr = "intelliw.cli.svr:app"
 client-cli = "intelliw.cli.client:app"
 business = "intelliw.cli.business:app"
+render = "intelliw.cli.render:app"
 
 [build-system]
 requires = ["uv_build>=0.9.26,<0.10.0"]

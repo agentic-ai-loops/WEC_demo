@@ -2,16 +2,18 @@
 
     uv run python examples/import_whitby_digest.py [--force]
 
-Follows the digest mapping in docs/design/01-businessdata.md. The digest's image files are
-not available, so placeholder PNGs are generated, named after the entity referring to each
-image (e.g. `dr-raniero-fernando.png` for a staff photo).
+Follows the digest mapping in docs/design/01-businessdata.md. The digest's image files
+(`assets/...`) live on the `main` branch; each business image is copied from there into
+`businessdata/resources/`, named after the entity referring to it with the file's own
+extension (e.g. `dr-raniero-fernando.jpg` for a staff photo). If an image cannot be read
+from git, a placeholder PNG is written instead.
 """
 
 import hashlib
-import json
 import re
 import shutil
 import struct
+import subprocess
 import sys
 import zlib
 from datetime import UTC, datetime
@@ -26,6 +28,7 @@ from intelliw.workspace import Workspace
 
 ROOT = Path(__file__).resolve().parent.parent
 DIGEST = ROOT / "digest.xml"
+IMAGES_BRANCH = "main"  # where the digest's `assets/...` image files are
 WORKSPACE = Workspace(ROOT / "examples" / "whitby_eye_care")
 
 # Image classification (01-businessdata, *Image ownership*): pictures of the business.
@@ -81,7 +84,21 @@ def split_list(value: str) -> list[str]:
     return [p.strip() for p in re.split(r",\s*|\s+and\s+", value) if p.strip()]
 
 
-# ---- placeholder images ------------------------------------------------------------
+# ---- images ------------------------------------------------------------------------
+
+
+def real_image(digest_path: str) -> bytes | None:
+    """The digest's image file from the images branch; None if git cannot provide it."""
+    try:
+        result = subprocess.run(
+            ["git", "show", f"{IMAGES_BRANCH}:{digest_path}"],
+            cwd=ROOT,
+            capture_output=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return result.stdout
 
 
 def placeholder_png(path: Path, name: str, size: tuple[int, int] = (320, 200)) -> None:
@@ -117,6 +134,7 @@ class Importer:
         self.now = now
         self.reviews: list[dict[str, Any]] = []
         self.contacts: list[dict[str, Any]] = []
+        self.asset_sources: dict[str, str] = {}  # asset id -> digest image path
 
     def entity(self, id: str, position: int, **fields: Any) -> dict[str, Any]:
         return {
@@ -416,14 +434,16 @@ class Importer:
             assert aid is not None
             stem = referrers.get(aid) or ("hero" if el.get("type") == "hero" else aid)
             alt = text(el.find("alt"))
+            source = text(el.find("path"))
             if aid in BUSINESS_IMAGES:
+                self.asset_sources[aid] = source
                 atype = el.get("type") if el.get("type") in ("logo", "favicon") else "photo"
                 assets.append(
                     self.entity(
                         aid,
                         len(assets),
                         type=atype,
-                        path=f"{stem}.png",
+                        path=f"{stem}{Path(source).suffix.lower() or '.png'}",
                         alt=alt or f"{business_name} {atype}",
                     )
                 )
@@ -517,28 +537,26 @@ class Importer:
 def main() -> None:
     force = "--force" in sys.argv
     ws = WORKSPACE
-    if ws.root.exists():
+    # only #businessdata is rebuilt; the designs in design/ are kept
+    if ws.businessdata_dir.exists():
         if not force:
-            sys.exit(f"{ws.root} exists; rerun with --force to rebuild it")
-        shutil.rmtree(ws.root)
-    for d in (ws.resources_dir, ws.assets_dir, ws.templates_dir, ws.site_dir):
-        d.mkdir(parents=True, exist_ok=True)
+            sys.exit(f"{ws.businessdata_dir} exists; rerun with --force to rebuild it")
+        shutil.rmtree(ws.businessdata_dir)
+    ws.resources_dir.mkdir(parents=True)
 
     now = datetime.now(UTC).isoformat()
-    document, design = Importer(ET.parse(DIGEST).getroot(), now).build()
+    importer = Importer(ET.parse(DIGEST).getroot(), now)
+    document, _design_images = importer.build()
     data = BusinessData.model_validate(document)  # full integrity check
 
+    placeholders = []
     for asset in data.assets:
-        placeholder_png(ws.resources_dir / asset.path, asset.id)
-    design_files = {
-        b["image"]
-        for s in design["slots"].values()
-        for b in ([s] if "image" in s else s.get("bindings", {}).values())
-        if not b["image"].startswith("businessdata:")
-    }
-    for f in design_files:
-        placeholder_png(ws.design_dir / f, f)
-    (ws.design_dir / "design.json").write_text(json.dumps(design, indent=2) + "\n")
+        content = real_image(importer.asset_sources[asset.id])
+        if content is None:
+            placeholder_png(ws.resources_dir / asset.path, asset.id)
+            placeholders.append(asset.path)
+        else:
+            (ws.resources_dir / asset.path).write_bytes(content)
 
     engine = create_db_engine(ws.database_file)
     init_db(engine)
@@ -548,8 +566,12 @@ def main() -> None:
 
     print(f"workspace:  {ws.root.relative_to(ROOT)}")
     print(f"database:   {ws.database_file.relative_to(ROOT)}")
-    print(f"resources:  {len(data.assets)} placeholder images")
-    print(f"design:     {len(design_files)} placeholder images, design.json")
+    real = len(data.assets) - len(placeholders)
+    print(
+        f"resources:  {real} images from {IMAGES_BRANCH}:assets/, {len(placeholders)} placeholders"
+    )
+    for path in placeholders:
+        print(f"            placeholder: {path} (not found on {IMAGES_BRANCH})")
     print(f"reviews:    {len(data.reviews)} open review items")
 
 

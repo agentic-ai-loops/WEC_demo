@@ -1,0 +1,10 @@
+# One product-categories entity with every field; related entities one level deep.
+query Entity($id: ID!) {
+  productCategory(id: $id) {
+    __typename id position hidden version
+    name description
+    image { __typename id type path alt }
+    reviews { __typename id status note }
+    createdAt updatedAt
+  }
+}

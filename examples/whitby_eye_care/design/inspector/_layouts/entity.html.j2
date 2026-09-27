@@ -1,0 +1,74 @@
+{% extends "_layouts/base.html.j2" %}
+{#- One entity in isolation (every `[id]/page.html.j2`, and `business/`): all its fields,
+    related entities one level deep, previous / next in its collection, and its raw JSON.
+    Everything is derived from the page's data, so the route templates only extend this. -#}
+
+{% block title %}{% set e = data.values() | first %}{{ e.get("name") or e.get("label") or e.get("question") or e.get("path") or e.get("id") }}{% endblock %}
+
+{% block crumbs %}
+{%- import "_partials/values.html.j2" as show with context -%}
+{%- set e = data.values() | first -%}
+{%- set route = show.ROUTES.get(e.__typename) -%}
+<a href="{{ url('') }}">inspector</a> ›
+{% if route %}<a href="{{ url('') }}#{{ route[0] }}">{{ route[2] }}</a>{% else %}<a href="{{ url('') }}#overview">Business</a>{% endif %}
+{%- endblock %}
+
+{% block heading %}
+{%- import "_partials/values.html.j2" as show with context -%}
+{%- set route = show.ROUTES.get((data.values() | first).__typename) -%}
+{{ route[2] if route else "Business" }}
+{%- endblock %}
+
+{% block main %}
+{%- import "_partials/values.html.j2" as show with context -%}
+{%- set e = data.values() | first -%}
+{%- set t = e.__typename -%}
+{%- set route = show.ROUTES.get(t) -%}
+{%- set tk = show.title_key(e) | trim -%}
+
+{#- previous / next in the collection's order (the site index lists what was rendered) -#}
+{% if route %}
+<nav class="pager">
+  {%- set items = site[route[1]] -%}
+  {%- for item in items %}{% if item.id == e.id %}
+    {% if loop.previtem is defined %}<a class="prev" href="{{ url(route[0] ~ '/' ~ loop.previtem.id ~ '/') }}">‹ {{ show.record_title(loop.previtem) }}</a>{% else %}<span></span>{% endif %}
+    <span class="dim">{{ loop.index }} / {{ loop.length }}</span>
+    {% if loop.nextitem is defined %}<a class="next" href="{{ url(route[0] ~ '/' ~ loop.nextitem.id ~ '/') }}">{{ show.record_title(loop.nextitem) }} ›</a>{% else %}<span></span>{% endif %}
+  {% endif %}{% endfor %}
+</nav>
+{% endif %}
+
+<article class="card entity{{ ' is-hidden' if e.get('hidden') }}" id="{{ show.anchor(t, e.get('id')) }}">
+  <header>
+    <div class="entity-title">
+      <span class="ref-type">{{ t }}</span>
+      <h2 data-field="{{ tk or 'id' }}">{{ show.record_title(e) }}</h2>
+    </div>
+    <div class="badges">
+      {%- if tk and e.get('id') is not none %}<code class="id" data-field="id">{{ e.id }}</code>{% endif -%}
+      {%- if 'hidden' in e %}<span class="badge {{ 'b-hidden' if e.hidden else 'b-shown' }}" data-field="hidden">hidden: {{ 'true' if e.hidden else 'false' }}</span>{% endif -%}
+      {%- if 'status' in e %}<span class="badge b-{{ e.status }}" data-field="status">{{ e.status }}</span>{% endif -%}
+      {%- for key in ('kind', 'type', 'platform') if key in e %}<span class="badge" data-field="{{ key }}">{{ key }}: {{ e[key] }}</span>{% endfor -%}
+    </div>
+  </header>
+  {%- set figures = show.asset_figures(e) | trim %}
+  {% if figures %}
+  <section class="referenced-assets">
+    <h3 class="section-label">referenced assets <span class="dim">· businessdata/resources/</span></h3>
+    <div class="asset-figs">{{ figures }}</div>
+  </section>
+  {% endif %}
+  {% if t == "Asset" %}
+  <a class="asset-full" href="{{ asset_url(e) }}"><img src="{{ asset_url(e) }}" alt="{{ e.alt }}"></a>
+  {% endif %}
+  {{ show.fields(e, skip=show.META + ['id', 'hidden', 'status', 'kind', 'type', 'platform', tk]) }}
+  <footer class="meta">
+    {%- for key in show.META if key in e %}<span data-field="{{ key }}"><span class="k">{{ key }}</span> {{ show.value(e[key]) }}</span>{% endfor -%}
+  </footer>
+</article>
+
+<details class="raw">
+  <summary>raw JSON <span class="dim">· the page.gql result</span></summary>
+  <pre>{{ data | tojson(indent=2) }}</pre>
+</details>
+{% endblock %}

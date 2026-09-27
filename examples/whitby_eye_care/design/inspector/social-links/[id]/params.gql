@@ -1,0 +1,2 @@
+# One page per social-links entity.
+query { socialLinks { id } }

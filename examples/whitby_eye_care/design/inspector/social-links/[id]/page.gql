@@ -1,0 +1,8 @@
+# One social-links entity with every field; related entities one level deep.
+query Entity($id: ID!) {
+  socialLink(id: $id) {
+    __typename id position hidden version
+    platform url label
+    createdAt updatedAt
+  }
+}

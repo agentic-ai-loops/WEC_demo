@@ -1,0 +1,74 @@
+{#- The inspector shell: sidebar navigation (a top bar with a menu on phones), top bar,
+    and the page's `main` block. The navigation counts come from the site index. -#}
+{%- set home = url('') -%}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site.business.name }}{% endblock %} · #businessdata inspector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="{{ url('style.css') }}">
+  {% if site.business.favicon %}<link rel="icon" href="{{ asset_url(site.business.favicon) }}">{% endif %}
+</head>
+<body data-render="{{ url('render.json') }}">
+<div class="app">
+  <aside class="sidebar">
+    <div class="bar">
+      <a class="brand" href="{{ home }}"><span class="prompt">❯</span> intelliw<span class="dim">/inspector</span></a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu">menu</button>
+    </div>
+    <div class="menu" id="menu">
+      <label class="search">
+        <span class="dim">filter</span>
+        <input id="filter" type="search" placeholder="text in any record…" autocomplete="off">
+      </label>
+      <nav>
+        <p class="nav-head">business</p>
+        <a href="{{ url('business/') }}">Business</a>
+        <a href="{{ home }}#versions">Versions <span class="count">{{ site.snapshots | length }}</span></a>
+        <p class="nav-head">collections</p>
+        {% for key, title, list_key in [
+          ("contacts", "Contact points", "contactPoints"), ("locations", "Locations", "locations"),
+          ("service-categories", "Service categories", "serviceCategories"), ("services", "Services", "services"),
+          ("product-categories", "Product categories", "productCategories"), ("staff", "Staff", "staff"),
+          ("faqs", "FAQs", "faqs"), ("social-links", "Social links", "socialLinks"),
+          ("affiliations", "Affiliations", "affiliations"), ("actions", "Customer actions", "actions"),
+        ] %}
+        <a href="{{ home }}#{{ key }}">{{ title }} <span class="count">{{ site[list_key] | length }}</span></a>
+        {% endfor %}
+        <p class="nav-head">files &amp; review</p>
+        <a href="{{ home }}#assets">Assets <span class="count">{{ site.assets | length }}</span></a>
+        <a href="{{ home }}#resources">Resource files <span class="count">{{ site.resourceFiles | length }}</span></a>
+        <a href="{{ home }}#reviews">Review items <span class="count">{{ site.reviews | length }}</span></a>
+        <a href="{{ home }}#trash">Trash <span class="count">{{ site.trash | length }}</span></a>
+        <a href="{{ home }}#render">Render</a>
+      </nav>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div>
+        <p class="crumbs">{% block crumbs %}<a href="{{ home }}">inspector</a>{% endblock %}</p>
+        <h1>{% block heading %}{{ site.business.name }}{% endblock %}</h1>
+      </div>
+      <div class="chips">
+        <span class="chip">version <b>{{ render.businessdata.version_name }}</b></span>
+        {% if render.businessdata.modified %}<span class="chip warn">unsaved changes</span>{% endif %}
+        <span class="chip {{ 'on' if render.include_hidden else 'off' }}">hidden {{ "included" if render.include_hidden else "excluded" }}</span>
+        <span class="chip">rendered <b class="local-time">{{ render.rendered_at }}</b></span>
+      </div>
+    </header>
+    {% if not render.include_hidden %}
+    <p class="notice">Hidden records are left out. Render with <code>--include-hidden</code> to show every record.</p>
+    {% endif %}
+    {% block main %}{% endblock %}
+    <footer class="page-foot dim">intelliw · design <code>{{ render.design.name }}</code> · {{ render.generator }}</footer>
+  </main>
+</div>
+<script src="{{ url('inspector.js') }}"></script>
+</body>
+</html>

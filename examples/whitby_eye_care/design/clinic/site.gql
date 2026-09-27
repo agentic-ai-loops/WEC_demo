@@ -1,0 +1,10 @@
+# Data every page needs: the business name, logo and contact points.
+query Site {
+  business {
+    name
+    tagline
+    logo { __typename id path alt }
+    favicon { __typename id path }
+  }
+  contactPoints { kind label value href }
+}

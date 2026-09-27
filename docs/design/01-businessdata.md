@@ -168,8 +168,9 @@ Common attributes:
    `tagline`, `Service.summary`, `audience`, `credentials`, `Faq.question`, alt text,
    review notes) are plain text.
 10. **Hidden entities.** Content entities have `hidden: bool = False`. A hidden entity
-    stays in #businessdata, keeps its id, references and review items, is returned by
-    queries and can be edited; it is left out when the #site is rendered. Uses: a doctor
+    stays in #businessdata, keeps its id, references and review items, and can be
+    edited; it is left out when the #site is rendered, and GraphQL queries leave it out
+    unless asked to include it (02-graphql-api, `includeHidden`). Uses: a doctor
     on leave, a seasonal service, a contact point kept on record but not published. A
     hidden entity remains a valid reference target. `Business`, `Asset` (shown only
     through references) and `ReviewItem` (never rendered) have no `hidden` flag.
@@ -242,6 +243,12 @@ activated from — and is *modified* if it has changed since.
   to it: uploading always creates a new path, and replacing a photo means registering the
   new file and updating the asset's `path`. This is a requirement on the web interface
   that manages resources and on the purge admin tool.
+- **Asset paths stay inside `businessdata/resources/`.** A `path` is relative and
+  `/`-separated. Each segment starts with a letter, digit or `_` and continues with
+  those, `.`, `-` or spaces, up to 255 characters in all. So there is no `..`, no leading
+  `/`, no hidden file and no backslash. Anything else fails validation. Code that turns
+  a path into a file also refuses a symlink resolving outside the folder
+  (`intelliw.businessdata.resources`).
 - **#design is not versioned with #businessdata.** #design slot bindings to entities
   that do not exist in the active version are ignored at render time (04-design).
 - **Version is context, not content.** Entities carry no version field; a
@@ -308,6 +315,8 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
 
 Slug = Annotated[str, Field(pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")]
+ResourcePath = Annotated[str, Field(pattern=r"^[A-Za-z0-9_][A-Za-z0-9_. -]*(/[A-Za-z0-9_][A-Za-z0-9_. -]*)*$",
+                                     max_length=255)]   # inside businessdata/resources/
 Markdown = str   # CommonMark (rule 9)
 
 
@@ -459,7 +468,7 @@ class CustomerAction(Hideable):
 
 class Asset(Entity):
     type: AssetType
-    path: str                         # relative to businessdata/resources/; file is immutable
+    path: ResourcePath                # relative, inside businessdata/resources/; file is immutable
     alt: str = ""
 
 
