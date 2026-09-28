@@ -12,7 +12,7 @@
     <h1 class="display-4 fw-bold">{{ b.name }}</h1>
     <p class="lead hero-lead">{{ b.tagline }}</p>
     {#- on phones the same actions are in the fixed bar at the bottom -#}
-    <div class="hero-actions d-none d-lg-flex flex-wrap gap-2 mt-4">
+    <div class="hero-actions d-none d-xl-flex flex-wrap gap-2 mt-4">
       {{ ui.action_button(site.bookAppointment, "btn btn-primary btn-lg") }}
       {{ ui.action_button(site.callClinic, "btn btn-light btn-lg") }}
       {{ ui.action_button(site.reorderLenses, "btn btn-outline-light btn-lg") }}

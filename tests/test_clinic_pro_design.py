@@ -58,7 +58,7 @@ def test_actions_are_on_every_page(out):
     for name, html in pages(out).items():
         for action in ACTIONS:
             assert f'data-action="{action}"' in html, (name, action)
-        assert 'class="action-bar d-lg-none"' in html, name
+        assert 'class="action-bar d-xl-none"' in html, name
 
 
 def test_home_has_the_sections_of_the_brief(out):
@@ -115,19 +115,30 @@ def test_light_and_dark_themes_with_a_toggle(out):
     home = (out / "index.html").read_text()
     assert '<html lang="en" class="no-js" data-bs-theme="light">' in home  # light by default
     assert ':root, [data-bs-theme="light"] {' in home and '[data-bs-theme="dark"] {' in home
-    assert "--c-primary: #0a66e8;" in home and "--c-primary: #5aa2ff;" in home  # from _config.json
+    assert "--c-primary: #a95a2e;" in home and "--c-primary: #e39a6e;" in home  # from _config.json
+    assert "--c-button: #0d0c0c;" in home and "--c-button: #f0dcc4;" in home
     assert "data-theme-toggle" in home
     assert 'localStorage.getItem("clinic-theme")' in home  # applied before paint
     js = (out / "assets" / "site.js").read_text()
     assert 'localStorage.setItem("clinic-theme", next)' in js
 
 
-def test_a_highly_readable_font_is_vendored(out):
+def test_fonts_are_vendored_with_their_licences(out):
+    """Editorial display/heading/script/UI faces; body text stays highly readable."""
     css = (out / "assets" / "site.css").read_text()
-    assert 'font-family: "Atkinson Hyperlegible"' in css
-    for w in ("400-normal", "700-normal", "400-italic", "700-italic"):
-        assert (out / "assets" / "fonts" / f"atkinson-hyperlegible-latin-{w}.woff2").is_file()
-    assert (out / "assets" / "ATKINSON-LICENSE.txt").is_file()
+    fonts = out / "assets" / "fonts"
+    for family, files, licence in [
+        ("Atkinson Hyperlegible", ["atkinson-hyperlegible-latin-400-normal"], "ATKINSON"),
+        ("Bodoni Moda", ["bodoni-moda-latin-opsz-normal"], "BODONI-MODA"),
+        ("Cormorant Garamond", ["cormorant-garamond-latin-600-normal"], "CORMORANT-GARAMOND"),
+        ("Allura", ["allura-latin-400-normal"], "ALLURA"),
+        ("Jost", ["jost-latin-500-normal"], "JOST"),
+    ]:
+        assert f'font-family: "{family}"' in css, family
+        for f in files:
+            assert (fonts / f"{f}.woff2").is_file(), f
+        assert (out / "assets" / f"{licence}-LICENSE.txt").is_file(), licence
+    assert '--bs-body-font-family: "Atkinson Hyperlegible"' in css
 
 
 def test_the_site_never_says_closed(out):
@@ -139,10 +150,10 @@ def test_the_site_never_says_closed(out):
 
 
 def test_hero_actions_only_where_the_action_bar_is_hidden(out):
-    """Phones get the actions in the bottom bar (d-lg-none), so the hero hides them there."""
+    """Phones get the actions in the bottom bar (d-xl-none), so the hero hides them there."""
     home = (out / "index.html").read_text()
-    assert '<div class="hero-actions d-none d-lg-flex' in home
-    assert '<div class="action-bar d-lg-none"' in home
+    assert '<div class="hero-actions d-none d-xl-flex' in home
+    assert '<div class="action-bar d-xl-none"' in home
 
 
 def test_get_in_touch_card_can_pop(out):
@@ -152,3 +163,10 @@ def test_get_in_touch_card_can_pop(out):
     assert "contact-panel reveal" not in home
     css = (out / "assets" / "site.css").read_text()
     assert ".contact-panel:hover" in css and ".contact-panel:active" in css
+
+
+def test_larger_type_scale_for_readability(out):
+    css = (out / "assets" / "site.css").read_text()
+    assert "html { font-size: 112.5%; }" in css  # 18px root: every rem size grows
+    home = (out / "index.html").read_text()
+    assert "navbar-expand-xl" in home  # the full navbar only where the larger text fits

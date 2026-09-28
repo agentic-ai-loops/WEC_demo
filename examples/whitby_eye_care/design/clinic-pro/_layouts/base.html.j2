@@ -22,6 +22,8 @@
   <meta name="description" content="{% block description %}{{ b.tagline }}{% endblock %}">
   {% if b.favicon %}<link rel="icon" href="{{ asset_url(b.favicon) }}">{% endif %}
   <link rel="preload" href="{{ url('assets/fonts/atkinson-hyperlegible-latin-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ url('assets/fonts/bodoni-moda-latin-opsz-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ url('assets/fonts/cormorant-garamond-latin-600-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{ url('assets/bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ url('assets/bootstrap-icons.min.css') }}">
   <link rel="stylesheet" href="{{ url('assets/site.css') }}">
@@ -34,13 +36,13 @@
 <body data-render="{{ url('render.json') }}" class="{{ 'has-action-bar' if actions }}">
 <a class="visually-hidden-focusable skip-link" href="#main">Skip to content</a>
 
-<nav class="navbar navbar-expand-lg sticky-top site-nav" aria-label="Main">
+<nav class="navbar navbar-expand-xl sticky-top site-nav" aria-label="Main">
   <div class="container">
     <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url('') }}">
       {% if b.logo %}<img src="{{ asset_url(b.logo) }}" alt="" width="40" height="40">{% endif %}
       <span>{{ b.name }}</span>
     </a>
-    <button class="theme-toggle ms-auto me-2 order-lg-last ms-lg-2 me-lg-0" type="button" data-theme-toggle
+    <button class="theme-toggle ms-auto me-2 order-xl-last ms-xl-2 me-xl-0" type="button" data-theme-toggle
             aria-label="Switch to dark theme" title="Switch theme">
       {{ ui.icon("moon-stars-fill", "icon-to-dark") }}{{ ui.icon("sun-fill", "icon-to-light") }}
     </button>
@@ -49,7 +51,7 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="nav-menu">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      <ul class="navbar-nav me-auto mb-2 mb-xl-0">
         <li class="nav-item"><a class="nav-link{{ ' active' if path == 'index.html' }}" href="{{ url('') }}"{% if path == 'index.html' %} aria-current="page"{% endif %}>Home</a></li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle{{ ' active' if section == 'services' }}" href="{{ url('') }}#services" role="button" data-bs-toggle="dropdown" aria-expanded="false">Services</a>
@@ -75,8 +77,9 @@
         <li class="nav-item"><a class="nav-link{{ ' active' if section == 'faq' }}" href="{{ url('faq/') }}">FAQ</a></li>
         <li class="nav-item"><a class="nav-link{{ ' active' if section == 'booking' }}" href="{{ url('booking/') }}">Booking</a></li>
       </ul>
-      <div class="d-none d-lg-flex gap-2 nav-actions">
-        {{ ui.action_button(site.callClinic, "btn btn-outline-primary btn-sm") }}
+      <div class="d-none d-xl-flex gap-2 nav-actions">
+        {#- the call button needs the extra width of xxl screens; it is in the hero anyway -#}
+        {{ ui.action_button(site.callClinic, "btn btn-outline-primary btn-sm d-none d-xxl-inline-block") }}
         {{ ui.action_button(site.bookAppointment, "btn btn-primary btn-sm") }}
       </div>
     </div>
@@ -120,7 +123,7 @@
 </footer>
 
 {%- if actions %}
-<div class="action-bar d-lg-none" role="navigation" aria-label="Quick actions">
+<div class="action-bar d-xl-none" role="navigation" aria-label="Quick actions">
   {%- for a in actions %}{{ ui.action_button(a, "action-bar-item", short=True) }}{% endfor %}
 </div>
 {%- endif %}
