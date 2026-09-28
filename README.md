@@ -21,7 +21,8 @@ src/intelliw/
   checks.py           Health checks used by `svr`
   workspace.py        Filesystem layout of one owner's workspace
 examples/whitby_eye_care/   Sample workspace: businessdata (run `make reimport`) + designs
-                      `clinic` (minimal site) and `inspector` (all data, one page)
+                      `clinic` (minimal site), `clinic-pro` (Bootstrap site) and
+                      `inspector` (all data)
 examples/demo/        A minimal business.json document
 tests/                pytest suite
 ```

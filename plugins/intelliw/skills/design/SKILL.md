@@ -327,16 +327,30 @@ reported by the render itself.
   so render them as text (`white-space: pre-line`) unless the docs say otherwise.
 - **Images**: business images come only through queries (`asset_url`); a decorative image
   the documents ask for goes in the design folder and is linked with `url()`.
-- **Mobile**: include `<meta name="viewport" content="width=device-width,
-  initial-scale=1">`, let grids collapse (`repeat(auto-fill, minmax(min(100%, 320px),
-  1fr))`), and break long values (`overflow-wrap: anywhere`) inside fixed-width blocks.
+- **CSS `url()` in custom properties** resolves against the stylesheet that *uses* the
+  variable, not the page that set it — `style="--bg: url(...)"` consumed by
+  `assets/site.css` requests `assets/assets/...` (the link check can't see this). Use a
+  real `<img>` (e.g. an absolutely positioned hero image) or set `background-image`
+  inline.
+- **Adding markup to data**: in `.html.j2`, `v | e` is a `Markup` string and its
+  `replace()` escapes the replacement too — `(v | e) | replace("@", "@<wbr>")` prints a
+  literal `&lt;wbr&gt;`. Split the value and write the tag as template text instead
+  (`{% for p in v.split("@") %}{{ p }}{% if not loop.last %}@<wbr>{% endif %}{% endfor %}`),
+  and grep the output for `&lt;` to catch this.
+- **JSON for scripts**: `| tojson` escapes `<>&'` but not `"` — put it in a
+  single-quoted attribute (`data-x='{{ v | tojson }}'`) or a
+  `<script type="application/json">` block.
 
 ## Examples in the repository
 
 - `examples/whitby_eye_care/design/clinic/` — minimal public site: home, one page per
   service, 404, stylesheet template, a script reading `render.json`.
+- `examples/whitby_eye_care/design/clinic-pro/` — a full public site (shared layout,
+  vendored front-end libraries, theme options in `_config.json`, contacts/actions
+  selected by id in `site.gql`, a page per service and staff member).
 - `examples/whitby_eye_care/design/inspector/` — generic developer view: one page with
   every field of every collection, an `[id]` route per collection, a site-wide entity
   index in `site.gql`, generic macros in `_partials/values.html.j2`.
 
-Read them for working patterns before writing a similar design.
+They are examples, not rules: every design chooses its own look, libraries, layout and
+behaviour. Only the spec above is enforced.

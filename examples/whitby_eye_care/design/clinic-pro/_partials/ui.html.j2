@@ -1,0 +1,199 @@
+{#- Building blocks shared by the pages. Every value comes from a query; optional
+    references and records named by id may be null, so every macro guards for it. -#}
+
+{%- set DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] -%}
+{%- set LANGUAGES = {
+  "en": "English", "fr": "French", "es": "Spanish", "pt": "Portuguese", "it": "Italian",
+  "de": "German", "yue": "Cantonese", "zh": "Chinese", "cmn": "Mandarin", "ur": "Urdu",
+  "hi": "Hindi", "pa": "Punjabi", "ta": "Tamil", "gu": "Gujarati", "bn": "Bengali",
+  "ar": "Arabic", "fa": "Persian", "tl": "Tagalog", "ko": "Korean", "ja": "Japanese",
+  "vi": "Vietnamese", "ru": "Russian", "uk": "Ukrainian", "pl": "Polish", "el": "Greek",
+} -%}
+{%- set CONTACT_ICONS = {
+  "phone": "telephone-fill", "email": "envelope-fill", "booking": "calendar2-check-fill",
+  "store": "bag-fill", "website": "globe2", "fax": "printer-fill",
+} -%}
+{%- set ACTION_ICONS = {
+  "book": "calendar2-check", "call": "telephone", "buy": "bag", "email": "envelope",
+  "visit": "globe2",
+} -%}
+{%- set SOCIAL_ICONS = {
+  "facebook": "facebook", "instagram": "instagram", "x": "twitter-x", "twitter": "twitter-x",
+  "pinterest": "pinterest", "youtube": "youtube", "linkedin": "linkedin", "tiktok": "tiktok",
+  "google": "google",
+} -%}
+{#- Icons for the clinic's service and product categories; anything else gets an eye. -#}
+{%- set CATEGORY_ICONS = {
+  "eye-exams": "eye", "contact-lenses": "record-circle", "dry-eye": "droplet-half",
+  "eye-health": "heart-pulse", "vision-correction": "bullseye", "eyewear": "eyeglasses",
+  "sunglasses": "sunglasses", "dry-eye-relief": "droplet",
+} -%}
+
+{%- macro icon(name, cls="") -%}<i class="bi bi-{{ name }}{{ ' ' ~ cls if cls }}" aria-hidden="true"></i>{%- endmacro -%}
+
+{%- macro external(href) -%}{% if href.startswith("http") %} target="_blank" rel="noopener"{% endif %}{%- endmacro -%}
+
+{#- "09:00:00" -> "9:00 AM" -#}
+{%- macro time12(t) -%}
+{%- set h = t[0:2] | int -%}{{ ((h + 11) % 12) + 1 }}:{{ t[3:5] }} {{ "PM" if h >= 12 else "AM" }}
+{%- endmacro -%}
+
+{#- A contact value that may break after "@" and dots instead of mid-word. The pieces are
+    escaped by autoescaping; the <wbr> tags come from the template. (Markup.replace would
+    escape the tags themselves.) -#}
+{%- macro breakable(v) -%}
+{%- for part in v.split("@") -%}
+{%- for piece in part.split(".") -%}{{ piece }}{% if not loop.last %}.<wbr>{% endif %}{%- endfor -%}
+{%- if not loop.last %}@<wbr>{% endif -%}
+{%- endfor -%}
+{%- endmacro -%}
+
+{%- macro lang_name(code) -%}{{ LANGUAGES.get(code, code | upper) }}{%- endmacro -%}
+
+{#- A customer action as a button; nothing if the action does not exist. -#}
+{%- macro action_button(a, cls="btn btn-primary", short=False) -%}
+{%- if a -%}
+<a class="{{ cls }}" href="{{ a.href }}"{{ external(a.href) }} data-action="{{ a.id }}">{{ icon(ACTION_ICONS.get(a.type, "arrow-right-circle")) }}<span{% if short %} class="action-label"{% endif %}>{{ a.label }}</span></a>
+{%- endif -%}
+{%- endmacro -%}
+
+{#- A contact point as an icon, label and value; nothing if it does not exist. -#}
+{%- macro contact_line(c, title="") -%}
+{%- if c -%}
+<a class="contact-line" href="{{ c.href }}"{{ external(c.href) }} data-contact="{{ c.id }}">
+  <span class="contact-icon">{{ icon(CONTACT_ICONS.get(c.kind, "chat-dots-fill")) }}</span>
+  <span><span class="contact-label">{{ title or c.label }}</span><span class="contact-value">{{ breakable(c.value) }}</span></span>
+</a>
+{%- endif -%}
+{%- endmacro -%}
+
+{#- A contact point as a call-to-action card (booking page). -#}
+{%- macro contact_card(c, title, text, button) -%}
+{%- if c -%}
+<div class="col-md-6 col-xl-3 reveal">
+  <div class="card h-100 contact-card" data-contact="{{ c.id }}">
+    <div class="card-body d-flex flex-column">
+      <span class="contact-icon contact-icon-lg mb-3">{{ icon(CONTACT_ICONS.get(c.kind, "chat-dots-fill")) }}</span>
+      <h3 class="h5">{{ title }}</h3>
+      <p class="text-secondary small mb-2">{{ text }}</p>
+      <p class="contact-value-lg">{{ breakable(c.value) if c.kind in ("phone", "email") else c.label }}</p>
+      <a class="btn {{ 'btn-primary' if c.kind == 'booking' else 'btn-outline-primary' }} mt-auto" href="{{ c.href }}"{{ external(c.href) }}>{{ button }}</a>
+    </div>
+  </div>
+</div>
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro address_block(loc) -%}
+<address class="mb-0" data-field="address">
+  <strong>{{ loc.name }}</strong><br>
+  {{ loc.address.street }}<br>
+  {{ loc.address.city }}, {{ loc.address.region }} {{ loc.address.postalCode }}
+</address>
+{%- endmacro -%}
+
+{#- The week's hours; the script marks today and shows "open now". -#}
+{%- macro hours_table(loc) -%}
+<table class="table table-sm hours-table mb-0" data-hours='{{ loc.hours | tojson }}'>
+  <tbody>
+  {%- for day in DAYS %}
+    {%- set spans = loc.hours | selectattr("day", "equalto", day) | rejectattr("closed") | list %}
+    <tr data-day="{{ day }}">
+      <th scope="row">{{ day | capitalize }}</th>
+      <td class="text-end">
+        {%- if spans -%}
+          {%- for s in spans %}{{ time12(s.open) }} – {{ time12(s.close) }}{% if not loop.last %}, {% endif %}{% endfor -%}
+        {%- else -%}<span class="no-hours" aria-label="No office hours">—</span>{%- endif -%}
+      </td>
+    </tr>
+  {%- endfor %}
+  </tbody>
+</table>
+{%- endmacro -%}
+
+{#- A Google Map of the address (no API key needed), loaded lazily. -#}
+{%- macro map_embed(loc) -%}
+{%- set q = loc.address.street ~ ", " ~ loc.address.city ~ ", " ~ loc.address.region ~ " " ~ loc.address.postalCode -%}
+<div class="map-frame ratio ratio-4x3">
+  <iframe title="Map of {{ loc.name }}" src="https://maps.google.com/maps?q={{ q | urlencode }}&amp;z=15&amp;output=embed"
+          loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+</div>
+{%- if loc.mapUrl %}
+<a class="small d-inline-block mt-2" href="{{ loc.mapUrl }}" target="_blank" rel="noopener">{{ icon("box-arrow-up-right") }} Open in Google Maps</a>
+{%- endif %}
+{%- endmacro -%}
+
+{#- A staff member's photo, or their initials when there is none. -#}
+{%- macro portrait(s, cls="") -%}
+{%- if s.photo -%}
+<img class="portrait {{ cls }}" src="{{ asset_url(s.photo) }}" alt="{{ s.photo.alt or s.name }}" loading="lazy">
+{%- else -%}
+{%- set words = s.name.replace("Dr.", "").split() -%}
+<span class="portrait avatar {{ cls }}" role="img" aria-label="{{ s.name }}">{{ words[0][0] }}{{ words[-1][0] if words | length > 1 }}</span>
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro languages(s) -%}
+{%- if s.languages %}
+<div class="d-flex flex-wrap gap-1" data-field="languages">
+  {{ icon("translate", "text-secondary me-1") }}
+  {%- for code in s.languages %}<span class="badge text-bg-light border">{{ lang_name(code) }}</span>{% endfor %}
+</div>
+{%- endif %}
+{%- endmacro -%}
+
+{%- macro staff_card(s) -%}
+<div class="col-sm-6 col-lg-3 reveal">
+  <a class="card h-100 staff-card text-decoration-none" href="{{ url('staff/' ~ s.id ~ '/') }}">
+    <div class="staff-photo">{{ portrait(s) }}</div>
+    <div class="card-body">
+      <h3 class="h5 mb-1">{{ s.name }}</h3>
+      <p class="eyebrow mb-2">{{ s.role }}</p>
+      {% if s.credentials %}<p class="small text-secondary mb-2">{{ s.credentials }}</p>{% endif %}
+      {{ languages(s) }}
+    </div>
+    <div class="card-footer bg-transparent border-0 pt-0"><span class="link-arrow">View profile {{ icon("arrow-right") }}</span></div>
+  </a>
+</div>
+{%- endmacro -%}
+
+{#- A service's image, or its category's icon. -#}
+{%- macro thumb(s, category_id, cls="thumb") -%}
+{%- if s.image -%}
+<img class="{{ cls }}" src="{{ asset_url(s.image) }}" alt="{{ s.image.alt or s.name }}" loading="lazy">
+{%- else -%}
+<span class="{{ cls }} thumb-icon" aria-hidden="true">{{ icon(CATEGORY_ICONS.get(category_id, "eye")) }}</span>
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro service_card(s, category_id) -%}
+<div class="col-md-6 col-xl-4 reveal">
+  <a class="card h-100 service-card text-decoration-none" href="{{ url('services/' ~ s.id ~ '/') }}">
+    <div class="card-body d-flex gap-3">
+      {{ thumb(s, category_id) }}
+      <div>
+        <h4 class="h6 mb-1">{{ s.name }}</h4>
+        {% if s.summary %}<p class="small text-secondary mb-2">{{ s.summary }}</p>{% endif %}
+        <span class="link-arrow small">Learn more {{ icon("arrow-right") }}</span>
+      </div>
+    </div>
+  </a>
+</div>
+{%- endmacro -%}
+
+{%- macro social_links(links, cls="") -%}
+<ul class="list-inline social-links mb-0 {{ cls }}">
+  {%- for s in links %}
+  <li class="list-inline-item"><a href="{{ s.url }}" target="_blank" rel="noopener" aria-label="{{ s.label }}" title="{{ s.label }}">{{ icon(SOCIAL_ICONS.get(s.platform, "globe2")) }}</a></li>
+  {%- endfor %}
+</ul>
+{%- endmacro -%}
+
+{#- A section heading with a small eyebrow line. -#}
+{%- macro heading(eyebrow, title, lead="") -%}
+<div class="section-heading reveal">
+  <p class="eyebrow">{{ eyebrow }}</p>
+  <h2>{{ title }}</h2>
+  {% if lead %}<p class="lead text-secondary">{{ lead }}</p>{% endif %}
+</div>
+{%- endmacro -%}

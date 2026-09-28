@@ -1,0 +1,2 @@
+# One page per service.
+query { services { id } }

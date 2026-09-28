@@ -1,0 +1,17 @@
+query Home {
+  staff {
+    id name role credentials languages
+    photo { __typename id path alt }
+  }
+  serviceCategories {
+    id name
+    services {
+      id name summary
+      image { __typename id path alt }
+    }
+  }
+  productCategories {
+    id name description
+    image { __typename id path alt }
+  }
+}

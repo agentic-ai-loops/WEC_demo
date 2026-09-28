@@ -566,6 +566,9 @@ Problems found only by running are render errors: missing keys or duplicates in
   page, a stylesheet template, and a script that reads `render.json`.
   `examples/import_whitby_digest.py` now rebuilds only `businessdata/`, keeping the
   designs.
+- A third example design, `examples/whitby_eye_care/design/clinic-pro/`, built from
+  `docs/notes/2026-09-27.md` with the `/intelliw:design` skill; its choices are its own
+  (see the design folder and `tests/test_clinic_pro_design.py`).
 - A second, generic example design, `examples/whitby_eye_care/design/inspector/`, is a
   developer view of the entire #businessdata on one page.
   - Its `page.gql` selects every field of every collection, with references as

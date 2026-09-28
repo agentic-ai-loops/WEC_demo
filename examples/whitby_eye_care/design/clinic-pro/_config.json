@@ -1,0 +1,48 @@
+{
+  "title": "Clinic Pro",
+  "description": "A bright, highly readable Bootstrap site for an optometry clinic, with light and dark themes: home, booking, FAQ, a page per service and per doctor.",
+  "options": {
+    "light": {
+      "primary": "#0a66e8",
+      "primary-hover": "#0850b8",
+      "on-primary": "#ffffff",
+      "primary-soft": "#e6f0ff",
+      "accent": "#00c2a8",
+      "accent-text": "#008577",
+      "warm": "#ff7a45",
+      "warm-text": "#c2410c",
+      "ink": "#0b1a33",
+      "muted": "#4b5b73",
+      "bg": "#ffffff",
+      "surface": "#ffffff",
+      "alt": "#eef5ff",
+      "border": "#d9e4f2",
+      "shadow": "rgba(10, 42, 92, .12)",
+      "hero-from": "rgba(6, 44, 120, .92)",
+      "hero-mid": "rgba(10, 102, 232, .72)",
+      "hero-to": "rgba(0, 194, 168, .25)",
+      "footer": "#0a1f44"
+    },
+    "dark": {
+      "primary": "#5aa2ff",
+      "primary-hover": "#86bbff",
+      "on-primary": "#04122b",
+      "primary-soft": "#13284a",
+      "accent": "#2ee6c9",
+      "accent-text": "#2ee6c9",
+      "warm": "#ff9a6b",
+      "warm-text": "#ff9a6b",
+      "ink": "#e9f0fb",
+      "muted": "#a6b4c8",
+      "bg": "#0a1222",
+      "surface": "#111c30",
+      "alt": "#0d1729",
+      "border": "#22324d",
+      "shadow": "rgba(0, 0, 0, .45)",
+      "hero-from": "rgba(4, 14, 36, .94)",
+      "hero-mid": "rgba(10, 61, 143, .78)",
+      "hero-to": "rgba(0, 110, 103, .35)",
+      "footer": "#060c18"
+    }
+  }
+}

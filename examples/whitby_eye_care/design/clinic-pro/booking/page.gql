@@ -1,0 +1,6 @@
+query Booking {
+  staff {
+    id name role credentials languages
+    photo { __typename id path alt }
+  }
+}

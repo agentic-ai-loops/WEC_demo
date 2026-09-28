@@ -1,0 +1,77 @@
+{% extends "_layouts/base.html.j2" %}
+{#- One service: what it is, its FAQs and actions, and the rest of its category. -#}
+{% block title %}{{ data.service.name }} — {{ site.business.name }}{% endblock %}
+{% block description %}{{ data.service.summary or site.business.tagline }}{% endblock %}
+{% block main %}
+{%- import "_partials/ui.html.j2" as ui with context -%}
+{%- set s = data.service -%}
+{%- set others = s.category.services | rejectattr("id", "equalto", s.id) | list -%}
+
+<header class="page-hero">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb breadcrumb-light">
+        <li class="breadcrumb-item"><a href="{{ url('') }}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ url('') }}#services">Services</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ s.category.name }}</li>
+      </ol>
+    </nav>
+    <h1>{{ s.name }}</h1>
+    {% if s.summary %}<p class="lead mb-0">{{ s.summary }}</p>{% endif %}
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <div class="row g-4 g-lg-5">
+      <div class="col-lg-8">
+        {% if s.image %}
+        <img class="detail-image reveal" src="{{ asset_url(s.image) }}" alt="{{ s.image.alt or s.name }}">
+        {% endif %}
+        {% if s.audience %}<p class="audience reveal">{{ ui.icon("people") }} <strong>For:</strong> {{ s.audience }}</p>{% endif %}
+        {% if s.description %}<div class="prose reveal">{{ s.description }}</div>{% endif %}
+
+        {% if s.faqs %}
+        <h2 class="h4 mt-5 mb-3">Questions about {{ s.name }}</h2>
+        <div class="accordion" id="service-faqs">
+          {% for f in s.faqs %}
+          <div class="accordion-item">
+            <h3 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sf-{{ f.id }}" aria-expanded="false" aria-controls="sf-{{ f.id }}">{{ f.question }}</button>
+            </h3>
+            <div id="sf-{{ f.id }}" class="accordion-collapse collapse"><div class="accordion-body prose">{{ f.answer }}</div></div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      <aside class="col-lg-4">
+        <div class="card sticky-card reveal">
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              {{ ui.thumb(s, s.category.id) }}
+              <div><p class="eyebrow mb-0">{{ s.category.name }}</p><strong>{{ s.name }}</strong></div>
+            </div>
+            <div class="d-grid gap-2">
+              {% for a in s.actions %}{{ ui.action_button(a, "btn btn-primary") }}{% else %}
+              {{ ui.action_button(site.bookAppointment, "btn btn-primary") }}
+              {{ ui.action_button(site.callClinic, "btn btn-outline-primary") }}{% endfor %}
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+{% if others %}
+<section class="section section-alt">
+  <div class="container">
+    {{ ui.heading(s.category.name, "Related services") }}
+    <div class="row g-3">
+      {% for o in others %}{{ ui.service_card(o, s.category.id) }}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

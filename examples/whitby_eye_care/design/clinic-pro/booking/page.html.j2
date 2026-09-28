@@ -1,0 +1,87 @@
+{% extends "_layouts/base.html.j2" %}
+{#- Booking: the business at a glance (visitors may land here first), every way to
+    book, the online store, and the doctors. -#}
+{% block title %}Book an appointment — {{ site.business.name }}{% endblock %}
+{% block main %}
+{%- import "_partials/ui.html.j2" as ui with context -%}
+{%- set b = site.business -%}
+{%- set loc = site.locations[0] if site.locations else none -%}
+
+<header class="page-hero">
+  <div class="container">
+    <p class="eyebrow eyebrow-light">Appointments</p>
+    <h1>Book your visit to {{ b.name }}</h1>
+    <p class="lead mb-0">{{ b.tagline }}</p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <div class="row g-4 align-items-stretch">
+      <div class="col-lg-7">
+        <div class="card h-100 reveal">
+          <div class="card-body">
+            <p class="eyebrow">{{ b.category }}{% if b.servingSince %} · since {{ b.servingSince }}{% endif %}</p>
+            <h2 class="h4">{{ b.name }}</h2>
+            <p class="prose mb-0">{{ b.description }}</p>
+          </div>
+        </div>
+      </div>
+      {% if loc %}
+      <div class="col-lg-5">
+        <div class="card h-100 reveal">
+          <div class="card-body">
+            <div class="d-flex gap-3 mb-3">
+              <span class="contact-icon">{{ ui.icon("geo-alt-fill") }}</span>
+              {{ ui.address_block(loc) }}
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h3 class="h6 mb-0">Office hours</h3><span class="open-status" data-open-status></span>
+            </div>
+            {{ ui.hours_table(loc) }}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section id="appointment" class="section section-alt">
+  <div class="container">
+    {{ ui.heading("Make an appointment", "Choose how you'd like to book") }}
+    <div class="row g-4">
+      {{ ui.contact_card(site.booking, "Book online", "Pick a time that suits you, any time of day.", "Book online") }}
+      {{ ui.contact_card(site.mainPhone, "Call the clinic", "Speak with our front desk during office hours.", "Call now") }}
+      {{ ui.contact_card(site.appointmentsEmail, "Email appointments", "Request an appointment by email.", "Send an email") }}
+      {{ ui.contact_card(site.generalEmail, "General enquiries", "Questions about services, insurance or products.", "Email us") }}
+    </div>
+  </div>
+</section>
+
+{% if site.store %}
+<section id="purchase" class="section">
+  <div class="container">
+    <div class="shop-banner reveal">
+      <div>
+        <p class="eyebrow eyebrow-light mb-1">Make an online purchase</p>
+        <h2 class="h4 mb-1">{{ ui.icon("bag-check") }} Reorder contact lenses and eye care products</h2>
+        <p class="mb-0">Delivered to your door from our online store.</p>
+      </div>
+      <a class="btn btn-light btn-lg" href="{{ site.store.href }}" target="_blank" rel="noopener" data-contact="{{ site.store.id }}">{{ site.store.label }} {{ ui.icon("box-arrow-up-right") }}</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if data.staff %}
+<section id="doctors" class="section section-alt">
+  <div class="container">
+    {{ ui.heading("Our team", "Your optometrists") }}
+    <div class="row g-4">
+      {% for s in data.staff %}{{ ui.staff_card(s) }}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

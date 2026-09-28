@@ -1,0 +1,55 @@
+{% extends "_layouts/base.html.j2" %}
+{#- Frequently asked questions, with a search box. -#}
+{% block title %}Frequently asked questions — {{ site.business.name }}{% endblock %}
+{% block main %}
+{%- import "_partials/ui.html.j2" as ui with context -%}
+
+<header class="page-hero">
+  <div class="container">
+    <p class="eyebrow eyebrow-light">Help</p>
+    <h1>Frequently asked questions</h1>
+    <p class="lead mb-0">Answers from our optometrists to the questions patients ask most.</p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container faq-container">
+    <label class="faq-search reveal">
+      <span class="visually-hidden">Search questions</span>
+      {{ ui.icon("search") }}
+      <input type="search" class="form-control form-control-lg" id="faq-search" placeholder="Search questions…" autocomplete="off">
+    </label>
+    <p class="text-secondary small" id="faq-count" aria-live="polite">{{ data.faqs | length }} questions</p>
+
+    <div class="accordion faq-accordion" id="faq-list">
+      {% for f in data.faqs %}
+      <div class="accordion-item faq-item" data-faq="{{ f.id }}">
+        <h2 class="accordion-header">
+          <button class="accordion-button{{ ' collapsed' if not loop.first }}" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#faq-{{ f.id }}" aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="faq-{{ f.id }}">
+            {{ f.question }}
+          </button>
+        </h2>
+        <div id="faq-{{ f.id }}" class="accordion-collapse collapse{{ ' show' if loop.first }}">
+          <div class="accordion-body">
+            <p class="prose mb-2">{{ f.answer }}</p>
+            {% if f.services %}
+            <p class="small mb-0 text-secondary">Related:
+              {% for s in f.services %}<a href="{{ url('services/' ~ s.id ~ '/') }}">{{ s.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
+            </p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="text-secondary d-none" id="faq-empty">No questions match your search.</p>
+
+    <div class="cta-strip reveal">
+      <span>Still have a question?</span>
+      {{ ui.action_button(site.callClinic, "btn btn-outline-primary") }}
+      {{ ui.action_button(site.bookAppointment, "btn btn-primary") }}
+    </div>
+  </div>
+</section>
+{% endblock %}

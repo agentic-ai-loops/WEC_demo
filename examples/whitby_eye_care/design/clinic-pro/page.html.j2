@@ -1,0 +1,158 @@
+{% extends "_layouts/base.html.j2" %}
+{#- The home page: hero, about, location, doctors, services, products, social. -#}
+{% block main %}
+{%- import "_partials/ui.html.j2" as ui with context -%}
+{%- set b = site.business -%}
+{%- set loc = site.locations[0] if site.locations else none -%}
+
+<header class="hero">
+  <img class="hero-bg" src="{{ url('assets/hero.jpg') }}" alt="" fetchpriority="high">
+  <div class="container hero-content">
+    <p class="eyebrow eyebrow-light">{{ b.category }}{% if b.servingSince %} · since {{ b.servingSince }}{% endif %}</p>
+    <h1 class="display-4 fw-bold">{{ b.name }}</h1>
+    <p class="lead hero-lead">{{ b.tagline }}</p>
+    {#- on phones the same actions are in the fixed bar at the bottom -#}
+    <div class="hero-actions d-none d-lg-flex flex-wrap gap-2 mt-4">
+      {{ ui.action_button(site.bookAppointment, "btn btn-primary btn-lg") }}
+      {{ ui.action_button(site.callClinic, "btn btn-light btn-lg") }}
+      {{ ui.action_button(site.reorderLenses, "btn btn-outline-light btn-lg") }}
+    </div>
+    {% if loc %}
+    <p class="hero-meta mt-4 mb-0">{{ ui.icon("geo-alt-fill") }} {{ loc.address.street }}, {{ loc.address.city }}
+      <span class="open-status ms-2" data-open-status></span></p>
+    {% endif %}
+  </div>
+</header>
+
+<section id="about" class="section">
+  <div class="container">
+    <div class="row g-4 g-lg-5 align-items-start">
+      <div class="col-lg-7">
+        {{ ui.heading("About us", "Eye care you can trust") }}
+        <p class="prose reveal">{{ b.description }}</p>
+        <dl class="facts reveal">
+          {% if b.serviceAreas %}<dt>{{ ui.icon("pin-map") }} Serving</dt>
+          <dd>{% for a in b.serviceAreas %}<span class="badge badge-soft">{{ a }}</span>{% endfor %}</dd>{% endif %}
+          {% if b.paymentMethods %}<dt>{{ ui.icon("credit-card") }} We accept</dt>
+          <dd>{% for m in b.paymentMethods %}<span class="badge badge-soft">{{ m | capitalize }}</span>{% endfor %}</dd>{% endif %}
+          {% if b.brands %}<dt>{{ ui.icon("eyeglasses") }} Brands</dt>
+          <dd>{% for m in b.brands %}<span class="badge badge-soft">{{ m }}</span>{% endfor %}</dd>{% endif %}
+        </dl>
+      </div>
+      <div class="col-lg-5">
+        {#- the fade-in is on a wrapper so it doesn't override the card's own hover transform -#}
+        <div class="reveal">
+        <div class="card contact-panel">
+          <div class="card-body">
+            <h3 class="h5 mb-3">Get in touch</h3>
+            <div class="d-grid gap-3">
+              {{ ui.contact_line(site.mainPhone, "Call us") }}
+              {{ ui.contact_line(site.generalEmail, "General enquiries") }}
+              {{ ui.contact_line(site.appointmentsEmail, "Appointments") }}
+            </div>
+            {{ ui.action_button(site.bookAppointment, "btn btn-primary w-100 mt-4") }}
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if loc %}
+<section id="location" class="section section-alt">
+  <div class="container">
+    {{ ui.heading("Location", "Visit the clinic") }}
+    <div class="row g-4">
+      <div class="col-lg-5">
+        <div class="card h-100 reveal">
+          <div class="card-body">
+            <div class="d-flex gap-3 mb-4">
+              <span class="contact-icon">{{ ui.icon("geo-alt-fill") }}</span>
+              {{ ui.address_block(loc) }}
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h3 class="h6 mb-0">Office hours</h3>
+              <span class="open-status" data-open-status></span>
+            </div>
+            {{ ui.hours_table(loc) }}
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7 reveal">{{ ui.map_embed(loc) }}</div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if data.staff %}
+<section id="doctors" class="section">
+  <div class="container">
+    {{ ui.heading("Our team", "Meet our optometrists") }}
+    <div class="row g-4">
+      {% for s in data.staff %}{{ ui.staff_card(s) }}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section id="services" class="section section-alt">
+  <div class="container">
+    {{ ui.heading("Services", "Complete eye care, under one roof") }}
+    {% for c in data.serviceCategories if c.services %}
+    <div class="service-group">
+      <h3 class="service-group-title reveal">{{ ui.icon(ui.CATEGORY_ICONS.get(c.id, "eye")) }} {{ c.name }}</h3>
+      <div class="row g-3">
+        {% for s in c.services %}{{ ui.service_card(s, c.id) }}{% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% if data.productCategories %}
+<section id="products" class="section">
+  <div class="container">
+    {{ ui.heading("Products", "Eyewear and eye care products") }}
+    <div class="row g-4">
+      {% for p in data.productCategories %}
+      <div class="col-md-4 reveal">
+        <div class="card h-100 product-card">
+          {% if p.image %}<img class="card-img-top" src="{{ asset_url(p.image) }}" alt="{{ p.image.alt or p.name }}" loading="lazy">
+          {% else %}<div class="product-icon">{{ ui.icon(ui.CATEGORY_ICONS.get(p.id, "bag-heart")) }}</div>{% endif %}
+          <div class="card-body">
+            <h3 class="h5">{{ p.name }}</h3>
+            <p class="small text-secondary prose mb-0">{{ p.description }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% if site.store %}
+    <div class="shop-banner reveal">
+      <div>
+        <h3 class="h4 mb-1">{{ ui.icon("bag-check") }} Shop online</h3>
+        <p class="mb-0">Reorder contact lenses and eye care products from our online store.</p>
+      </div>
+      <a class="btn btn-light btn-lg" href="{{ site.store.href }}" target="_blank" rel="noopener" data-contact="{{ site.store.id }}">{{ site.store.label }} {{ ui.icon("box-arrow-up-right") }}</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if site.socialLinks %}
+<section id="online" class="section section-alt">
+  <div class="container text-center">
+    {{ ui.heading("Find us online", "Follow along") }}
+    <div class="social-grid reveal">
+      {% for s in site.socialLinks %}
+      <a class="social-tile" href="{{ s.url }}" target="_blank" rel="noopener">
+        {{ ui.icon(ui.SOCIAL_ICONS.get(s.platform, "globe2")) }}<span>{{ s.label }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

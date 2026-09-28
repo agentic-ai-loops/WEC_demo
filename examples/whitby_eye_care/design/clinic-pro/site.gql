@@ -1,0 +1,34 @@
+# Data every page needs: identity, the contact points and customer actions named in the
+# brief (by id), the location, social links, and the lists behind the navigation menus.
+fragment Contact on ContactPoint { id kind label value href }
+fragment Action on CustomerAction { id type label href }
+
+query Site {
+  business {
+    name tagline category description servingSince
+    serviceAreas paymentMethods brands
+    logo { __typename id path alt }
+    favicon { __typename id path }
+  }
+
+  mainPhone: contactPoint(id: "main-phone") { ...Contact }
+  generalEmail: contactPoint(id: "general-enquiries-email") { ...Contact }
+  appointmentsEmail: contactPoint(id: "appointments-email") { ...Contact }
+  booking: contactPoint(id: "booking") { ...Contact }
+  store: contactPoint(id: "store") { ...Contact }
+
+  bookAppointment: customerAction(id: "book-appointment") { ...Action }
+  callClinic: customerAction(id: "call-clinic") { ...Action }
+  reorderLenses: customerAction(id: "reorder-contact-lenses") { ...Action }
+
+  locations {
+    id name mapUrl
+    address { street city region postalCode country }
+    hours { day seq open close closed }
+  }
+
+  socialLinks { id platform url label }
+
+  serviceCategories { id name services { id name } }
+  staff { id name role }
+}

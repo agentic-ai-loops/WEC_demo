@@ -1,0 +1,6 @@
+query Faq {
+  faqs {
+    id question answer
+    services { id name }
+  }
+}

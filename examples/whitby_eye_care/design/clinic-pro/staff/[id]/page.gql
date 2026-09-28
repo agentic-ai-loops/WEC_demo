@@ -1,0 +1,6 @@
+query StaffMember($id: ID!) {
+  staffMember(id: $id) {
+    id name role credentials bio languages
+    photo { __typename id path alt }
+  }
+}

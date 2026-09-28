@@ -1,0 +1,57 @@
+{% extends "_layouts/base.html.j2" %}
+{#- One staff member's profile. -#}
+{% block title %}{{ data.staffMember.name }} — {{ site.business.name }}{% endblock %}
+{% block description %}{{ data.staffMember.role }} at {{ site.business.name }}{% endblock %}
+{% block main %}
+{%- import "_partials/ui.html.j2" as ui with context -%}
+{%- set s = data.staffMember -%}
+{%- set team = site.staff | rejectattr("id", "equalto", s.id) | list -%}
+
+<header class="page-hero">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb breadcrumb-light">
+        <li class="breadcrumb-item"><a href="{{ url('') }}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ url('') }}#doctors">Our Doctors</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ s.name }}</li>
+      </ol>
+    </nav>
+    <h1>{{ s.name }}</h1>
+    <p class="lead mb-0">{{ s.role }}</p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <div class="row g-4 g-lg-5">
+      <div class="col-md-4 reveal">
+        <div class="profile-photo">{{ ui.portrait(s, "portrait-lg") }}</div>
+        <div class="d-grid gap-2 mt-4">
+          {{ ui.action_button(site.bookAppointment, "btn btn-primary") }}
+          {{ ui.action_button(site.callClinic, "btn btn-outline-primary") }}
+        </div>
+      </div>
+      <div class="col-md-8">
+        {% if s.credentials %}
+        <div class="credentials reveal">{{ ui.icon("mortarboard") }}<div><p class="eyebrow mb-1">Credentials</p><p class="mb-0">{{ s.credentials }}</p></div></div>
+        {% endif %}
+        {% if s.languages %}<div class="mb-4 reveal">{{ ui.languages(s) }}</div>{% endif %}
+        {% if s.bio %}<div class="prose reveal">{{ s.bio }}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if team %}
+<section class="section section-alt">
+  <div class="container">
+    {{ ui.heading("Our team", "Meet the rest of the team") }}
+    <div class="d-flex flex-wrap gap-3">
+      {% for t in team %}
+      <a class="team-chip" href="{{ url('staff/' ~ t.id ~ '/') }}">{{ ui.icon("person-circle") }} {{ t.name }}<small>{{ t.role }}</small></a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
