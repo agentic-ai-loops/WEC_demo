@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en" class="no-js" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    /* the saved theme, applied before the page paints (light is the default) */
+    try {
+      var t = localStorage.getItem("clinic-theme");
+      if (t === "dark" || t === "light") document.documentElement.setAttribute("data-bs-theme", t);
+    } catch (e) {}
+  </script>
+  <meta name="color-scheme" content="light dark">
+  <title>Dr. Hajra Naeem — Whitby Eye Care</title>
+  <meta name="description" content="Optometrist at Whitby Eye Care">
+  <link rel="icon" href="../../resources/whitby-eye-care-favicon.png">
+  <link rel="preload" href="../../assets/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../../assets/fonts/bodoni-moda-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../../assets/fonts/cormorant-garamond-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../assets/bootstrap.min.css">
+  <link rel="stylesheet" href="../../assets/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="../../assets/site.css"><style>
+    :root, [data-bs-theme="light"] { --c-primary: #a95a2e; --c-primary-hover: #8a4722; --c-on-primary: #ffffff; --c-primary-soft: #f6e7dc; --c-button: #0d0c0c; --c-button-hover: #3a302c; --c-on-button: #ffffff; --c-heading: #cc7848; --c-accent: #e4c09c; --c-accent-text: #7a4f24; --c-warm: #f0c6ba; --c-warm-text: #a95a2e; --c-ink: #241e1e; --c-muted: #6b5f58; --c-bg: #faf7f2; --c-surface: #fffdf9; --c-alt: #faf2e7; --c-border: #eadbcc; --c-shadow: rgba(90, 55, 30, .14); --c-hero-from: rgba(228, 192, 156, .97); --c-hero-mid: rgba(228, 192, 156, .86); --c-hero-to: rgba(228, 192, 156, .06); --c-hero-ink: #241e1e; --c-page-hero: #e4c09c; --c-footer: #605a5a; }
+    [data-bs-theme="dark"] { --c-primary: #e39a6e; --c-primary-hover: #f0b48f; --c-on-primary: #1a1413; --c-primary-soft: #3a2a22; --c-button: #f0dcc4; --c-button-hover: #fbead6; --c-on-button: #1a1413; --c-heading: #e8a57c; --c-accent: #b98d63; --c-accent-text: #f0c69b; --c-warm: #c98f82; --c-warm-text: #e39a6e; --c-ink: #f5ede4; --c-muted: #c2b2a6; --c-bg: #1a1413; --c-surface: #241b18; --c-alt: #201816; --c-border: #3b2e29; --c-shadow: rgba(0, 0, 0, .5); --c-hero-from: rgba(26, 20, 19, .96); --c-hero-mid: rgba(26, 20, 19, .82); --c-hero-to: rgba(26, 20, 19, .12); --c-hero-ink: #f5ede4; --c-page-hero: #2d2320; --c-footer: #2d2522; }
+  </style>
+</head>
+<body data-render="../../render.json" class="has-action-bar">
+<a class="visually-hidden-focusable skip-link" href="#main">Skip to content</a>
+
+<nav class="navbar navbar-expand-xl sticky-top site-nav" aria-label="Main">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="../../">
+      <img src="../../resources/whitby-eye-care-logo.png" alt="" width="40" height="40">
+      <span>Whitby Eye Care</span>
+    </a>
+    <button class="theme-toggle ms-auto me-2 order-xl-last ms-xl-2 me-xl-0" type="button" data-theme-toggle
+            aria-label="Switch to dark theme" title="Switch theme">
+      <i class="bi bi-moon-stars-fill icon-to-dark" aria-hidden="true"></i><i class="bi bi-sun-fill icon-to-light" aria-hidden="true"></i>
+    </button>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-menu"
+            aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav-menu">
+      <ul class="navbar-nav me-auto mb-2 mb-xl-0">
+        <li class="nav-item"><a class="nav-link" href="../../">Home</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="../../#services" role="button" data-bs-toggle="dropdown" aria-expanded="false">Services</a>
+          <ul class="dropdown-menu dropdown-menu-wide">
+            <li><h6 class="dropdown-header">Eye exams</h6></li>
+            <li><a class="dropdown-item" href="../../services/eye-exams/">Eye Exams</a></li>
+            <li><a class="dropdown-item" href="../../services/adult-senior-eye-exams/">Adult &amp; Senior Eye Exams</a></li>
+            <li><a class="dropdown-item" href="../../services/children-eye-exams/">Children’s Eye Exams</a></li>
+            <li><a class="dropdown-item" href="../../services/mto-and-police-eye-exams/">MTO and Police Eye Exams</a></li>
+            <li><h6 class="dropdown-header">Contact lenses</h6></li>
+            <li><a class="dropdown-item" href="../../services/contact-lens-fitting/">Contact Lens Fitting</a></li>
+            <li><h6 class="dropdown-header">Dry eye</h6></li>
+            <li><a class="dropdown-item" href="../../services/dry-eye-testing/">Dry Eye Testing</a></li>
+            <li><a class="dropdown-item" href="../../services/blephex-treatment/">BlephEx Treatment</a></li>
+            <li><h6 class="dropdown-header">Eye health</h6></li>
+            <li><a class="dropdown-item" href="../../services/oct-testing/">OCT Testing</a></li>
+            <li><a class="dropdown-item" href="../../services/management-of-eye-disease/">Management of Eye Disease</a></li>
+            <li><a class="dropdown-item" href="../../services/computer-related-eye-strain/">Computer Related Eye Strain</a></li>
+            <li><h6 class="dropdown-header">Vision correction</h6></li>
+            <li><a class="dropdown-item" href="../../services/laser-vision-correction/">Laser Vision Correction</a></li>
+            <li><h6 class="dropdown-header">Eyewear</h6></li>
+            <li><a class="dropdown-item" href="../../services/prescription-eyewear/">Prescription Eyewear and Safety Glasses</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle active" href="../../#doctors" role="button" data-bs-toggle="dropdown" aria-expanded="false">Our Doctors</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="../dr-raniero-fernando/">Dr. Raniero Fernando<small class="d-block text-secondary">Optometrist</small></a></li>
+            <li><a class="dropdown-item" href="../dr-andrea-chan/">Dr. Andrea Chan<small class="d-block text-secondary">Optometrist</small></a></li>
+            <li><a class="dropdown-item" href="./">Dr. Hajra Naeem<small class="d-block text-secondary">Optometrist</small></a></li>
+            <li><a class="dropdown-item" href="../dr-sumeya-mao/">Dr. Sumeya Mao<small class="d-block text-secondary">Optometrist</small></a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="../../faq/">FAQ</a></li>
+        <li class="nav-item"><a class="nav-link" href="../../booking/">Booking</a></li>
+      </ul>
+      <div class="d-none d-xl-flex gap-2 nav-actions"><a class="btn btn-outline-primary btn-sm d-none d-xxl-inline-block" href="tel:9056556236" data-action="call-clinic"><i class="bi bi-telephone" aria-hidden="true"></i><span>Call Now</span></a>
+        <a class="btn btn-primary btn-sm" href="https://atlas.opto.com/v1/Router/8090/bookAppointment/?lang=En" target="_blank" rel="noopener" data-action="book-appointment"><i class="bi bi-calendar2-check" aria-hidden="true"></i><span>Book Appointment</span></a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<header class="page-hero">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb breadcrumb-light">
+        <li class="breadcrumb-item"><a href="../../">Home</a></li>
+        <li class="breadcrumb-item"><a href="../../#doctors">Our Doctors</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Dr. Hajra Naeem</li>
+      </ol>
+    </nav>
+    <h1>Dr. Hajra Naeem</h1>
+    <p class="lead mb-0">Optometrist</p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <div class="row g-4 g-lg-5">
+      <div class="col-md-4 reveal">
+        <div class="profile-photo"><span class="portrait avatar portrait-lg" role="img" aria-label="Dr. Hajra Naeem">HN</span></div>
+        <div class="d-grid gap-2 mt-4">
+          <a class="btn btn-primary" href="https://atlas.opto.com/v1/Router/8090/bookAppointment/?lang=En" target="_blank" rel="noopener" data-action="book-appointment"><i class="bi bi-calendar2-check" aria-hidden="true"></i><span>Book Appointment</span></a>
+          <a class="btn btn-outline-primary" href="tel:9056556236" data-action="call-clinic"><i class="bi bi-telephone" aria-hidden="true"></i><span>Call Now</span></a>
+        </div>
+      </div>
+      <div class="col-md-8">
+        
+        <div class="credentials reveal"><i class="bi bi-mortarboard" aria-hidden="true"></i><div><p class="eyebrow mb-1">Credentials</p><p class="mb-0">Doctor of Optometry, University of Waterloo (2023)</p></div></div>
+        
+        <div class="mb-4 reveal">
+<div class="d-flex flex-wrap gap-1" data-field="languages">
+  <i class="bi bi-translate text-secondary me-1" aria-hidden="true"></i><span class="badge text-bg-light border">English</span><span class="badge text-bg-light border">Urdu</span><span class="badge text-bg-light border">Hindi</span>
+</div></div>
+        <div class="prose reveal">Dr. Hajra Naeem completed her undergraduate studies at UOIT before receiving her Doctor of Optometry degree at the University of Waterloo in 2023. During her externships, she provided comprehensive care to patients of all ages and found a particular interest in managing Dry Eye Disease. Dr. Naeem is happy to be serving her community and can do your eye exam in English, Urdu or Hindi.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-heading reveal">
+  <p class="eyebrow">Our team</p>
+  <h2>Meet the rest of the team</h2>
+  
+</div>
+    <div class="d-flex flex-wrap gap-3">
+      
+      <a class="team-chip" href="../dr-raniero-fernando/"><i class="bi bi-person-circle" aria-hidden="true"></i> Dr. Raniero Fernando<small>Optometrist</small></a>
+      
+      <a class="team-chip" href="../dr-andrea-chan/"><i class="bi bi-person-circle" aria-hidden="true"></i> Dr. Andrea Chan<small>Optometrist</small></a>
+      
+      <a class="team-chip" href="../dr-sumeya-mao/"><i class="bi bi-person-circle" aria-hidden="true"></i> Dr. Sumeya Mao<small>Optometrist</small></a>
+      
+    </div>
+  </div>
+</section>
+
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <img src="../../resources/whitby-eye-care-logo.png" alt="" width="36" height="36">
+          <strong class="fs-5">Whitby Eye Care</strong>
+        </div>
+        <p class="footer-muted">Trust a professional with your eyecare needs… Your eyes deserve an optometrist!</p>
+        <ul class="list-inline social-links mb-0 ">
+  <li class="list-inline-item"><a href="https://www.facebook.com/wecare4yourvision/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook"><i class="bi bi-facebook" aria-hidden="true"></i></a></li>
+  <li class="list-inline-item"><a href="https://www.instagram.com/drrfernandooptometrist/" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><i class="bi bi-instagram" aria-hidden="true"></i></a></li>
+  <li class="list-inline-item"><a href="https://twitter.com/DrRFernandoOpto" target="_blank" rel="noopener" aria-label="X (Twitter)" title="X (Twitter)"><i class="bi bi-twitter-x" aria-hidden="true"></i></a></li>
+  <li class="list-inline-item"><a href="https://www.pinterest.com/DrRFernandoOpto" target="_blank" rel="noopener" aria-label="Pinterest" title="Pinterest"><i class="bi bi-pinterest" aria-hidden="true"></i></a></li>
+</ul>
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <h2 class="footer-title">Visit us</h2>
+        <address class="mb-0" data-field="address">
+  <strong>Whitby Eye Care</strong><br>
+  4091 Thickson Road North, Unit 2<br>
+  Whitby, ON L1R 2X3
+</address>
+        <p class="mt-2 mb-0"><span class="open-status" data-open-status></span></p>
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <h2 class="footer-title">Contact</h2>
+        <div class="d-grid gap-2">
+          <a class="contact-line" href="tel:9056556236" data-contact="main-phone">
+  <span class="contact-icon"><i class="bi bi-telephone-fill" aria-hidden="true"></i></span>
+  <span><span class="contact-label">Main</span><span class="contact-value">905-655-6236</span></span>
+</a>
+          <a class="contact-line" href="mailto:info@whitbyeyecare.com" data-contact="general-enquiries-email">
+  <span class="contact-icon"><i class="bi bi-envelope-fill" aria-hidden="true"></i></span>
+  <span><span class="contact-label">General enquiries</span><span class="contact-value">info@<wbr>whitbyeyecare.<wbr>com</span></span>
+</a>
+          <a class="contact-line" href="mailto:dr.r.fernando@gmail.com" data-contact="appointments-email">
+  <span class="contact-icon"><i class="bi bi-envelope-fill" aria-hidden="true"></i></span>
+  <span><span class="contact-label">Appointments</span><span class="contact-value">dr.<wbr>r.<wbr>fernando@<wbr>gmail.<wbr>com</span></span>
+</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© Whitby Eye Care · caring for eyes since 2002</span>
+      <span>Updated <time class="js-local-date" datetime="2026-09-27T06:08:48.642351Z">2026-09-27</time></span>
+    </div>
+  </div>
+</footer>
+<div class="action-bar d-xl-none" role="navigation" aria-label="Quick actions"><a class="action-bar-item" href="https://atlas.opto.com/v1/Router/8090/bookAppointment/?lang=En" target="_blank" rel="noopener" data-action="book-appointment"><i class="bi bi-calendar2-check" aria-hidden="true"></i><span class="action-label">Book Appointment</span></a><a class="action-bar-item" href="tel:9056556236" data-action="call-clinic"><i class="bi bi-telephone" aria-hidden="true"></i><span class="action-label">Call Now</span></a><a class="action-bar-item" href="https://whitbyeyecare.ottooptics.io/reorder/product/" target="_blank" rel="noopener" data-action="reorder-contact-lenses"><i class="bi bi-bag" aria-hidden="true"></i><span class="action-label">Reorder Contact Lenses</span></a>
+</div>
+<script type="application/json" id="clinic-hours">[{"close": "19:00:00", "closed": false, "day": "monday", "open": "09:00:00", "seq": 0}, {"close": "17:00:00", "closed": false, "day": "tuesday", "open": "09:00:00", "seq": 0}, {"close": "19:00:00", "closed": false, "day": "wednesday", "open": "09:00:00", "seq": 0}, {"close": "19:00:00", "closed": false, "day": "thursday", "open": "09:00:00", "seq": 0}, {"close": "17:00:00", "closed": false, "day": "friday", "open": "10:00:00", "seq": 0}, {"close": "15:00:00", "closed": false, "day": "saturday", "open": "09:00:00", "seq": 0}, {"close": null, "closed": true, "day": "sunday", "open": null, "seq": 0}]</script>
+<script src="../../assets/bootstrap.bundle.min.js"></script>
+<script src="../../assets/site.js"></script>
+</body>
+</html>

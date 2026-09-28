@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Management of Eye Disease · Whitby Eye Care</title>
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="icon" href="../../resources/whitby-eye-care-favicon.png">
+</head>
+<body data-render="../../render.json">
+  
+  <p class="preview">Preview: 1, hidden records shown</p>
+  
+  <header>
+    <a class="brand" href="../../">
+      <img src="../../resources/whitby-eye-care-logo.png" alt="Whitby Eye Care logo">
+      <span>Whitby Eye Care</span>
+    </a>
+  </header>
+  <main>
+  <p class="crumbs"><a href="../../">Home</a> › Eye health</p>
+  <h1>Management of Eye Disease</h1>
+  
+  <p class="summary">Monitoring and care for diabetic eye disease, glaucoma, macular degeneration and cataracts.</p>
+  <p>Diabetes can affect various organs in your body, including your eyes. Fluctuating blood sugar can weaken the blood vessels in your retina, causing them to leak, and retinal bleeding can damage its structure, causing loss of vision. A diabetic eye exam includes a dilated retinal exam, where the doctor inserts drops to dilate your pupils; after waiting 15 minutes, the retina is examined for signs of diabetic retinopathy, and an OCT test is recommended to provide a more thorough examination. Glaucoma is a disease of the optic nerve, which slowly deteriorates, typically over several years, resulting in the gradual loss of peripheral vision; untreated glaucoma can result in complete vision loss. Macula degeneration is a result of the disruption of the area of the retina which provides central vision; the two varieties are dry macula degeneration (slowly progressing) and wet macula degeneration (potentially rapidly progressing), and it can be inherited. Cataracts are a result of the clouding of the crystalline lens within the eye, so vision gradually becomes cloudy and acuity decreases; cataracts typically worsen with age and can be accelerated by conditions such as diabetes, but cataract surgery is quick and very successful in restoring vision.</p>
+  
+  
+</main>
+  <footer>
+    <ul class="contacts">
+      
+      <li><a href="tel:9056556236">Main: 905-655-6236</a></li>
+      
+      <li><a href="mailto:info@whitbyeyecare.com">General enquiries: info@whitbyeyecare.com</a></li>
+      
+      <li><a href="mailto:dr.r.fernando@gmail.com">Appointments: dr.r.fernando@gmail.com</a></li>
+      
+      <li><a href="https://atlas.opto.com/v1/Router/8090/bookAppointment/?lang=En">: https://atlas.opto.com/v1/Router/8090/bookAppointment/?lang=En</a></li>
+      
+      <li><a href="https://whitbyeyecare.ottooptics.io/reorder/product/">: https://whitbyeyecare.ottooptics.io/reorder/product/</a></li>
+      
+    </ul>
+    <p class="updated">Last updated <span id="updated"></span></p>
+  </footer>
+  <script>
+    fetch(document.body.dataset.render)
+      .then((r) => r.json())
+      .then((info) => {
+        const when = info.businessdata.updated_at || info.rendered_at;
+        document.getElementById("updated").textContent = new Date(when).toLocaleDateString();
+      });
+  </script>
+</body>
+</html>

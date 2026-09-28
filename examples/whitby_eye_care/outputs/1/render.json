@@ -1,0 +1,21 @@
+{
+  "rendered_at": "2026-09-27T03:15:42.588549Z",
+  "generator": "intelliw 0.1.0",
+  "design": {
+    "name": "clinic",
+    "title": "Clinic (minimal)"
+  },
+  "businessdata": {
+    "version_name": "1",
+    "version": 1,
+    "snapshot": null,
+    "based_on": {
+      "number": 1,
+      "tag": null,
+      "created_at": "2026-09-25T13:28:34.525814Z"
+    },
+    "modified": false,
+    "updated_at": "2026-09-25T13:28:34.248183Z"
+  },
+  "include_hidden": true
+}

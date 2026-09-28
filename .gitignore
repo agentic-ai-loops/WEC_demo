@@ -16,3 +16,8 @@ outputs/
 .run/
 # workspace databases
 *.db
+
+# the Whitby example workspace is kept complete in the repo: its database and
+# rendered sites are included (other workspaces' databases and outputs stay ignored)
+!examples/whitby_eye_care/businessdata/business.db
+!examples/whitby_eye_care/outputs/

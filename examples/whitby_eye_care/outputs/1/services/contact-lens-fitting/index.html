@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact Lens Fitting · Whitby Eye Care</title>
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="icon" href="../../resources/whitby-eye-care-favicon.png">
+</head>
+<body data-render="../../render.json">
+  
+  <p class="preview">Preview: 1, hidden records shown</p>
+  
+  <header>
+    <a class="brand" href="../../">
+      <img src="../../resources/whitby-eye-care-logo.png" alt="Whitby Eye Care logo">
+      <span>Whitby Eye Care</span>
+    </a>
+  </header>
+  <main>
+  <p class="crumbs"><a href="../../">Home</a> › Contact lenses</p>
+  <h1>Contact Lens Fitting</h1>
+  
+  <p class="summary">Fitting, training and free trial lenses for new and experienced contact lens wearers.</p>
+  <p>Advances in contact lens technology have made them much healthier to wear. Newer silicone-hydrogel materials allow more oxygen through the lens, allowing your eyes to breathe, which reduces signs of corneal hypoxia. One-day disposable lenses reduce eye infections as compared to reusable lenses. New contact lens wearers first get a comprehensive eye exam, followed by a discussion on the suitability of contact lenses. Candidates then go through a training process where they are shown how to insert and remove lenses, and lenses are checked for excellent fit and vision. An optometrist or optician will ensure an optimal lens fitting for maximal comfort and ocular health. New wearers are sent home with a set of free trial lenses to test out in their normal daily routine; once satisfied, the lenses can be purchased at our office. We carry all the major brands as well as custom order lenses, there is no charge for exchanges of unused boxes, no charge for follow-up visits for problems related to lenses purchased at our office, big savings with manufacturer rebate offers, and convenient direct shipping to your home.</p>
+  
+  
+</main>
+  <footer>
+    <ul class="contacts">
+      
+      <li><a href="tel:9056556236">Main: 905-655-6236</a></li>
+      
+      <li><a href="mailto:info@whitbyeyecare.com">General enquiries: info@whitbyeyecare.com</a></li>
+      
+      <li><a href="mailto:dr.r.fernando@gmail.com">Appointments: dr.r.fernando@gmail.com</a></li>
+      
+      <li><a href="https://atlas.opto.com/v1/Router/8090/bookAppointment/?lang=En">: https://atlas.opto.com/v1/Router/8090/bookAppointment/?lang=En</a></li>
+      
+      <li><a href="https://whitbyeyecare.ottooptics.io/reorder/product/">: https://whitbyeyecare.ottooptics.io/reorder/product/</a></li>
+      
+    </ul>
+    <p class="updated">Last updated <span id="updated"></span></p>
+  </footer>
+  <script>
+    fetch(document.body.dataset.render)
+      .then((r) => r.json())
+      .then((info) => {
+        const when = info.businessdata.updated_at || info.rendered_at;
+        document.getElementById("updated").textContent = new Date(when).toLocaleDateString();
+      });
+  </script>
+</body>
+</html>
