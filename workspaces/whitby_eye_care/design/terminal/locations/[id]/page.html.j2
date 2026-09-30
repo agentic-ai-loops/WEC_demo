@@ -1,0 +1,32 @@
+{% extends "_layouts/base.html.j2" %}
+{#- One Location: every field, its relations as links, the reviews pointing at it. -#}
+{% block title %}locations/{{ params.id }}{% endblock %}
+{% block main %}
+{%- import "_partials/rich.html.j2" as rich with context -%}
+{%- set e = data.e -%}
+{% call rich.panel(e.name | truncate(70, true, '…', 0), "Location · locations/" ~ e.id, cls="panel-strong panel-head") %}
+{%- if e.get('hidden') %}<p class="warn">hidden: not on the public site</p>{% endif %}
+{% call rich.kv() %}
+{{ rich.row('id', rich.value(e.id)) }}
+{{ rich.row('name', rich.value(e.name)) }}
+{% call rich.row('address') %}{% call rich.kv() %}
+{%- for k in ['street', 'city', 'region', 'postalCode', 'country'] %}{{ rich.row(k, rich.value(e.address[k])) }}{% endfor -%}
+{% endcall %}{% endcall %}
+{% call rich.row('geo') %}{% if e.geo %}{{ e.geo.lat }}, {{ e.geo.lng }}{% else %}{{ rich.value(none) }}{% endif %}{% endcall %}
+{% call rich.row('mapUrl') %}{% if e.mapUrl %}<a href="{{ e.mapUrl }}">{{ e.mapUrl | truncate(70, true, '…', 0) }}</a>{% else %}{{ rich.value(none) }}{% endif %}{% endcall %}
+{% endcall %}
+{% endcall %}
+{% call rich.panel("hours (" ~ e.hours | length ~ ")") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>day</th><th class="num">seq</th><th>open</th><th>close</th><th>closed</th></tr></thead><tbody>
+{%- for h in e.hours %}
+<tr><td>{{ h.day }}</td><td class="num">{{ h.seq }}</td><td>{{ rich.value(h.open[:5] if h.open else none) }}</td><td>{{ rich.value(h.close[:5] if h.close else none) }}</td><td>{{ rich.value(h.closed) }}</td></tr>
+{%- else %}<tr><td colspan="5" class="v-none">[]</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+{% call rich.panel("relations") %}{% call rich.kv() %}
+{% call rich.row('phone') %}{% if e.phone %}{{ rich.ref('contacts', e.phone.id) }}{% else %}{{ rich.value(none) }}{% endif %}{% endcall %}
+{% endcall %}{% endcall %}
+{{ rich.tail('locations', e) }}
+{% endblock %}

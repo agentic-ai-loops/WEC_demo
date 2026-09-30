@@ -1,0 +1,6 @@
+query Entity($id: ID!) {
+  e: asset(id: $id) {
+    __typename id type path alt usedBy { collection id field } version createdAt
+    updatedAt position
+  }
+}

@@ -1,0 +1,22 @@
+{% extends "_layouts/base.html.j2" %}
+{#- One ContactPoint: every field, its relations as links, the reviews pointing at it. -#}
+{% block title %}contacts/{{ params.id }}{% endblock %}
+{% block main %}
+{%- import "_partials/rich.html.j2" as rich with context -%}
+{%- set e = data.e -%}
+{% call rich.panel(e.label | truncate(70, true, '…', 0), "ContactPoint · contacts/" ~ e.id, cls="panel-strong panel-head") %}
+{%- if e.get('hidden') %}<p class="warn">hidden: not on the public site</p>{% endif %}
+{% call rich.kv() %}
+{{ rich.row('id', rich.value(e.id)) }}
+{{ rich.row('kind', rich.value(e.kind)) }}
+{{ rich.row('label', rich.value(e.label)) }}
+{{ rich.row('value', rich.value(e.value)) }}
+{{ rich.row('primary', rich.value(e.primary)) }}
+{% call rich.row('href') %}<a href="{{ e.href }}">{{ e.href }}</a>{% endcall %}
+{% endcall %}
+{% endcall %}
+{% call rich.panel("relations") %}{% call rich.kv() %}
+{% call rich.row('usedBy') %}{{ rich.refs('actions', e.usedBy) }}{% endcall %}
+{% endcall %}{% endcall %}
+{{ rich.tail('contacts', e) }}
+{% endblock %}

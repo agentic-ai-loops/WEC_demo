@@ -1,0 +1,2 @@
+# One page per actions entity.
+query { actions { id } }

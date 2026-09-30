@@ -1,0 +1,2 @@
+# One page per faqs entity.
+query { faqs { id } }

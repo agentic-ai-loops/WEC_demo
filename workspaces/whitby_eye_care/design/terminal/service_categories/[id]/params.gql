@@ -1,0 +1,2 @@
+# One page per service_categories entity.
+query { serviceCategories { id } }

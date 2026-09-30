@@ -1,0 +1,6 @@
+query Entity($id: ID!) {
+  e: reviewItem(id: $id) {
+    id status note resolution target { collection id field entity { __typename } }
+    version createdAt updatedAt position
+  }
+}

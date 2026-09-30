@@ -1,0 +1,190 @@
+{% extends "_layouts/base.html.j2" %}
+{#- The front page: all of the business data. Every entity is listed with a few key
+    fields and links to its own page; the version state and files come last. -#}
+{% block main %}
+{%- import "_partials/rich.html.j2" as rich with context -%}
+{%- set d = data -%}
+{%- set b = d.business -%}
+{%- macro id_link(c, e) -%}<a class="ref" href="{{ url(c ~ '/' ~ e.id ~ '/') }}">{{ e.id }}</a>{{ rich.hidden_tag(e) }}{%- endmacro -%}
+{%- set sections = [
+  ('locations', d.locations), ('contacts', d.contactPoints), ('actions', d.actions),
+  ('service_categories', d.serviceCategories), ('services', d.services),
+  ('product_categories', d.productCategories), ('staff', d.staff), ('faqs', d.faqs),
+  ('social_links', d.socialLinks), ('affiliations', d.affiliations), ('assets', d.assets),
+  ('reviews', d.reviews),
+] -%}
+
+{% call rich.panel(b.name, "business", cls="panel-strong panel-head") %}
+<p class="lead">{{ b.tagline }}</p>
+{% call rich.kv() %}
+{{ rich.row('legalName', rich.value(b.legalName)) }}
+{{ rich.row('category', rich.value(b.category)) }}
+{{ rich.row('servingSince', rich.value(b.servingSince)) }}
+{% call rich.row('details') %}<a class="ref" href="{{ url('business/') }}">business</a> <span class="ref-title">every field</span>{% endcall %}
+{% endcall %}
+{% endcall %}
+
+{% call rich.panel("collections", "entities per collection, in position order") %}
+<ul class="toc">
+  <li><a href="{{ url('business/') }}">business</a> <span class="count">1</span></li>
+  {%- for name, items in sections %}
+  <li><a href="#{{ name }}">{{ name }}</a> <span class="count">{{ items | length }}</span></li>
+  {%- endfor %}
+  <li><a href="#system">system</a></li>
+</ul>
+{% endcall %}
+
+{% call rich.panel("locations (" ~ d.locations | length ~ ")", id="locations") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>id</th><th>name</th><th>city</th><th class="opt">hours</th></tr></thead><tbody>
+{%- for e in d.locations %}
+<tr{% if e.hidden %} class="is-hidden"{% endif %}><td>{{ id_link('locations', e) }}</td><td>{{ e.name }}</td><td>{{ e.address.city }}, {{ e.address.region }}</td><td class="opt grey">{{ e.hours | length }} rows</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("contacts (" ~ d.contactPoints | length ~ ")", id="contacts") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>id</th><th>kind</th><th>label</th><th class="opt">value</th></tr></thead><tbody>
+{%- for e in d.contactPoints %}
+<tr{% if e.hidden %} class="is-hidden"{% endif %}><td>{{ id_link('contacts', e) }}</td><td class="grey">{{ e.kind }}</td><td>{{ e.label }}{% if e.primary %} <span class="tag">primary</span>{% endif %}</td><td class="opt wrap">{{ e.value | truncate(34, true, '…', 0) }}</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("actions (" ~ d.actions | length ~ ")", id="actions") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>id</th><th>type</th><th>label</th><th class="opt">channel</th></tr></thead><tbody>
+{%- for e in d.actions %}
+<tr{% if e.hidden %} class="is-hidden"{% endif %}><td>{{ id_link('actions', e) }}</td><td class="grey">{{ e.type }}</td><td>{{ e.label }}</td><td class="opt">{{ rich.ref('contacts', e.channel.id, false) }}</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("service_categories (" ~ d.serviceCategories | length ~ ")", id="service_categories") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>id</th><th>name</th><th class="num">services</th></tr></thead><tbody>
+{%- for e in d.serviceCategories %}
+<tr{% if e.hidden %} class="is-hidden"{% endif %}><td>{{ id_link('service_categories', e) }}</td><td>{{ e.name }}</td><td class="num">{{ e.services | length }}</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("services (" ~ d.services | length ~ ")", id="services") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>id</th><th>name</th><th class="opt">category</th></tr></thead><tbody>
+{%- for e in d.services %}
+<tr{% if e.hidden %} class="is-hidden"{% endif %}><td>{{ id_link('services', e) }}</td><td>{{ e.name }}</td><td class="opt grey">{{ e.category.id }}</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("product_categories (" ~ d.productCategories | length ~ ")", id="product_categories") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>id</th><th>name</th></tr></thead><tbody>
+{%- for e in d.productCategories %}
+<tr{% if e.hidden %} class="is-hidden"{% endif %}><td>{{ id_link('product_categories', e) }}</td><td>{{ e.name }}</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("staff (" ~ d.staff | length ~ ")", id="staff") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>id</th><th>name</th><th class="opt">role</th></tr></thead><tbody>
+{%- for e in d.staff %}
+<tr{% if e.hidden %} class="is-hidden"{% endif %}><td>{{ id_link('staff', e) }}</td><td>{{ e.name }}</td><td class="opt grey">{{ e.role }}</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("faqs (" ~ d.faqs | length ~ ")", id="faqs") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>id</th><th>question</th></tr></thead><tbody>
+{%- for e in d.faqs %}
+<tr{% if e.hidden %} class="is-hidden"{% endif %}><td>{{ id_link('faqs', e) }}</td><td class="wrap">{{ e.question }}</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("social_links (" ~ d.socialLinks | length ~ ")", id="social_links") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>id</th><th>platform</th><th>label</th></tr></thead><tbody>
+{%- for e in d.socialLinks %}
+<tr{% if e.hidden %} class="is-hidden"{% endif %}><td>{{ id_link('social_links', e) }}</td><td class="grey">{{ e.platform }}</td><td>{{ e.label }}</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("affiliations (" ~ d.affiliations | length ~ ")", id="affiliations") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>id</th><th>name</th></tr></thead><tbody>
+{%- for e in d.affiliations %}
+<tr{% if e.hidden %} class="is-hidden"{% endif %}><td>{{ id_link('affiliations', e) }}</td><td>{{ e.name }}</td></tr>
+{%- else %}
+<tr><td colspan="2" class="v-none">[]</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("assets (" ~ d.assets | length ~ ")", id="assets") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>id</th><th>image</th><th>type</th><th class="opt">path</th><th class="num">used</th></tr></thead><tbody>
+{%- for e in d.assets %}
+<tr><td>{{ id_link('assets', e) }}</td><td>{{ rich.thumb(e) }}</td><td class="grey">{{ e.type }}</td><td class="opt wrap">{{ e.path }}</td><td class="num">{{ e.usedBy | length }}</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("reviews (" ~ d.reviews | length ~ ")", "all statuses", id="reviews") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>id</th><th>status</th><th class="opt">target</th></tr></thead><tbody>
+{%- for e in d.reviews %}
+<tr><td>{{ id_link('reviews', e) }}</td><td>{{ rich.status(e.status) }}</td><td class="opt grey">{{ e.target.collection }}{% if e.target.id %}/{{ e.target.id }}{% endif %}{% if e.target.field %}.{{ e.target.field }}{% endif %}</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("system", "version state and files", id="system") %}
+{% set av = d.activeVersion %}
+{% call rich.kv() %}
+{{ rich.row('rendered', rich.value(render.businessdata.version_name)) }}
+{% call rich.row('activeVersion.basedOn') %}#{{ av.basedOn.number }}{% if av.basedOn.tag %} "{{ av.basedOn.tag }}"{% endif %} <span class="grey">{{ av.basedOn.createdAt[:16] | replace('T', ' ') }}</span>{% endcall %}
+{{ rich.row('activeVersion.modified', rich.value(av.modified)) }}
+{% endcall %}
+
+{% call rich.panel("snapshots (" ~ d.snapshots | length ~ ")") %}
+<div class="scroll"><table class="grid">
+<thead><tr><th class="num">#</th><th>tag</th><th class="opt">parent</th><th>created</th></tr></thead><tbody>
+{%- for s in d.snapshots %}
+<tr><td class="num">{{ s.number }}</td><td>{{ rich.value(s.tag) }}</td><td class="opt">{{ rich.value(s.parent) }}</td><td class="grey">{{ s.createdAt[:16] | replace('T', ' ') }}</td></tr>
+{%- else %}
+<tr><td colspan="4" class="v-none">[]</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{% endcall %}
+
+{% call rich.panel("resources/ (" ~ d.resourceFiles | length ~ " files)") %}
+{%- set registered = d.assets | map(attribute='path') | list %}
+<ul class="ref-list">
+{%- for f in d.resourceFiles %}
+  <li>{{ f }}{% if f in d.unregistered %} <span class="tag tag-open">unregistered</span>{% elif f not in registered %} <span class="tag">not shown</span>{% endif %}</li>
+{%- else %}
+  <li class="v-none">[]</li>
+{%- endfor %}
+</ul>
+{% endcall %}
+
+{% call rich.panel("trash (" ~ d.trash | length ~ ")") %}
+{%- if d.trash %}
+<div class="scroll"><table class="grid">
+<thead><tr><th>entity</th><th>label</th><th class="opt">deleted</th></tr></thead><tbody>
+{%- for t in d.trash %}
+<tr><td class="grey">{{ t.ref.collection }}/{{ t.ref.id }}</td><td>{{ t.label }}</td><td class="opt grey">{{ t.deletedAt[:16] | replace('T', ' ') }}</td></tr>
+{%- endfor %}
+</tbody></table></div>
+{%- else %}
+<p class="v-none">[] empty</p>
+{%- endif %}
+{% endcall %}
+{% endcall %}
+{% endblock %}

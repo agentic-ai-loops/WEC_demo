@@ -1,0 +1,2 @@
+# One page per product_categories entity.
+query { productCategories { id } }

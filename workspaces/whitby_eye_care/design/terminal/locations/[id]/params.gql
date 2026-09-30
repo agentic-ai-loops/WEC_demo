@@ -1,0 +1,2 @@
+# One page per locations entity.
+query { locations { id } }

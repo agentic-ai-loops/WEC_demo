@@ -1,0 +1,6 @@
+query Entity($id: ID!) {
+  e: contactPoint(id: $id) {
+    id kind label value primary href usedBy { id } reviews { id status target { field }
+    } version createdAt updatedAt position hidden
+  }
+}

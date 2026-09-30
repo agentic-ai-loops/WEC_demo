@@ -1,0 +1,21 @@
+# The front page: every entity, with only its key fields; details are on its own page.
+query Front {
+  business { name legalName tagline category servingSince }
+  contactPoints { id kind label value primary hidden }
+  locations { id name address { city region } hours { day } hidden }
+  serviceCategories { id name services { id } hidden }
+  services { id name category { id } hidden }
+  productCategories { id name hidden }
+  staff { id name role hidden }
+  faqs { id question services { id } hidden }
+  socialLinks { id platform label hidden }
+  affiliations { id name hidden }
+  actions { id type label channel { id } hidden }
+  assets { __typename id type path alt usedBy { collection } }
+  reviews(status: null) { id status target { collection id field } }
+  activeVersion { modified basedOn { number tag createdAt } }
+  snapshots { number tag parent createdAt }
+  resourceFiles
+  unregistered: resourceFiles(unregistered: true)
+  trash { ref { collection id } label deletedAt }
+}

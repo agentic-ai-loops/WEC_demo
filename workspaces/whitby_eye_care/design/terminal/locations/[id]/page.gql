@@ -1,0 +1,7 @@
+query Entity($id: ID!) {
+  e: location(id: $id) {
+    id name address { street city region postalCode country } geo { lat lng } mapUrl
+    phone { id } hours { day seq open close closed } reviews { id status target { field
+    } } version createdAt updatedAt position hidden
+  }
+}

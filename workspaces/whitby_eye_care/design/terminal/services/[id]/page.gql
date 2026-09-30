@@ -1,0 +1,7 @@
+query Entity($id: ID!) {
+  e: service(id: $id) {
+    id name summary description audience category { id } image { __typename id path alt }
+    faqs { id } actions { id } reviews { id status target { field } } version createdAt
+    updatedAt position hidden
+  }
+}

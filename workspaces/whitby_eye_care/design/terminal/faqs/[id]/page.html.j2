@@ -1,0 +1,19 @@
+{% extends "_layouts/base.html.j2" %}
+{#- One Faq: every field, its relations as links, the reviews pointing at it. -#}
+{% block title %}faqs/{{ params.id }}{% endblock %}
+{% block main %}
+{%- import "_partials/rich.html.j2" as rich with context -%}
+{%- set e = data.e -%}
+{% call rich.panel(e.question | truncate(70, true, '…', 0), "Faq · faqs/" ~ e.id, cls="panel-strong panel-head") %}
+{%- if e.get('hidden') %}<p class="warn">hidden: not on the public site</p>{% endif %}
+{% call rich.kv() %}
+{{ rich.row('id', rich.value(e.id)) }}
+{{ rich.row('question', rich.value(e.question)) }}
+{{ rich.row('answer', rich.value(e.answer)) }}
+{% endcall %}
+{% endcall %}
+{% call rich.panel("relations") %}{% call rich.kv() %}
+{% call rich.row('services') %}{{ rich.refs('services', e.services) }}{% endcall %}
+{% endcall %}{% endcall %}
+{{ rich.tail('faqs', e) }}
+{% endblock %}

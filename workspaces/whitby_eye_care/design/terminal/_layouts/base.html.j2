@@ -1,0 +1,47 @@
+{#- The terminal window every page is printed in. Blocks: title, main. -#}
+{%- import "_partials/rich.html.j2" as rich with context -%}
+{%- set b = site.business -%}
+{%- set bd = render.businessdata -%}
+{%- set dir = path[:-10] if path.endswith('index.html') else path -%}
+{%- set segs = dir.rstrip('/').split('/') if dir else [] -%}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ b.name }}{% endblock %} · terminal</title>
+  <meta name="robots" content="noindex">
+  {% if b.favicon %}<link rel="icon" href="{{ asset_url(b.favicon) }}">{% endif %}
+  <link rel="stylesheet" href="{{ url('static/terminal.css') }}">
+</head>
+<body>
+<div class="term">
+  <header class="term-bar">
+    <span class="term-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="term-name">intelliw — {{ b.name }} — {{ bd.version_name }}{{ ' + hidden' if render.include_hidden }}</span>
+  </header>
+
+  <main class="term-screen" id="main">
+    {%- if render.include_hidden or bd.version is not none %}
+    <p class="warn">[!] preview:
+      {%- if bd.version is not none %} snapshot #{{ bd.version }}{% if bd.snapshot %} ({{ bd.snapshot }}){% endif %},{% endif %}
+      {%- if render.include_hidden %} hidden entities included,{% endif %} not the public view.</p>
+    {%- endif %}
+
+    <nav class="crumbs" aria-label="Breadcrumb">
+      {%- if segs %}<a href="{{ url('') }}">home</a>{% else %}<span aria-current="page">home</span>{% endif %}
+      {%- for s in segs %} <span class="sep">/</span> {% if loop.last %}<span aria-current="page">{{ s }}</span>{% elif loop.first %}<a href="{{ url('') }}#{{ s }}">{{ s }}</a>{% else %}{{ s }}{% endif %}{% endfor -%}
+    </nav>
+
+    {% block main %}{% endblock %}
+  </main>
+
+  <footer class="term-status">
+    <span>{{ render.generator }}</span>
+    <span>design {{ render.design.name }}</span>
+    <span>data {{ bd.version_name }}{% if bd.based_on %} · based on #{{ bd.based_on.number }}{% if bd.based_on.tag %} "{{ bd.based_on.tag }}"{% endif %}{% endif %}{{ ' · modified' if bd.modified }}</span>
+    <span>rendered {{ render.rendered_at[:19] | replace('T', ' ') }}Z</span>
+  </footer>
+</div>
+</body>
+</html>

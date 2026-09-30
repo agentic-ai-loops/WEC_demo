@@ -1,0 +1,6 @@
+query Entity($id: ID!) {
+  e: customerAction(id: $id) {
+    id type label href channel { id hidden } services { id } version createdAt updatedAt
+    position hidden
+  }
+}

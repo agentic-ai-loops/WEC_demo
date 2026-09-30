@@ -1,0 +1,140 @@
+{#- Terminal building blocks, after Python rich: Panel, Table, and pretty values.
+    Import with context: {% import "_partials/rich.html.j2" as rich with context %} -#}
+
+{#- A rich Panel: a rounded box with the title in the top border and an optional
+    subtitle in the bottom one. Use with {% call rich.panel("title") %}…{% endcall %}. -#}
+{%- macro panel(title, subtitle="", id="", cls="") -%}
+<section class="panel{{ ' ' ~ cls if cls }}"{% if id %} id="{{ id }}"{% endif %}>
+  <h2 class="panel-title"><span>{{ title }}</span></h2>
+  <div class="panel-body">{{ caller() }}</div>
+  {%- if subtitle %}
+  <p class="panel-subtitle"><span>{{ subtitle }}</span></p>
+  {%- endif %}
+</section>
+{%- endmacro -%}
+
+{#- A Python-ish rendering of one value: None, True/False, numbers, strings, lists. -#}
+{%- macro value(v) -%}
+{%- if v is none -%}<span class="v-none">None</span>
+{%- elif v is boolean -%}<span class="v-bool">{{ 'True' if v else 'False' }}</span>
+{%- elif v is number -%}<span class="v-num">{{ v }}</span>
+{%- elif v is string -%}
+  {%- if v == '' -%}<span class="v-none">''</span>
+  {%- else -%}<span class="v-str{{ ' v-text' if v | length > 80 or '\n' in v }}">{{ v }}</span>
+  {%- endif -%}
+{%- elif v is sequence -%}
+  {%- if v -%}<span class="v-list">[{% for x in v %}<span class="v-item">{{ value(x) }}</span>{% if not loop.last %}, {% endif %}{% endfor %}]</span>
+  {%- else -%}<span class="v-none">[]</span>
+  {%- endif -%}
+{%- else -%}{{ v }}
+{%- endif -%}
+{%- endmacro -%}
+
+{#- Whether `collection/id` has a page in this render. The business has one page. -#}
+{%- macro exists(collection, id) -%}
+{%- if collection == 'business' -%}1
+{%- elif collection in site and id in (site[collection] | map(attribute='id') | list) -%}1
+{%- endif -%}
+{%- endmacro -%}
+
+{#- The index title of `collection/id`, or '' when it has no page. -#}
+{%- macro title_of(collection, id) -%}
+{%- if collection == 'business' -%}{{ site.business.name }}
+{%- elif collection in site -%}
+  {%- for e in site[collection] if e.id == id %}{{ e.title | truncate(60, true, '…', 0) }}{% endfor -%}
+{%- endif -%}
+{%- endmacro -%}
+
+{#- A reference to another entity: `collection/id` as a link when its page exists,
+    otherwise dimmed (hidden, or gone), plus the target's title. -#}
+{%- macro ref(collection, id, title=true) -%}
+{%- set key = collection if collection == 'business' else collection ~ '/' ~ id -%}
+{%- if exists(collection, id) | trim -%}
+<a class="ref" href="{{ url(key ~ '/') }}">{{ key }}</a>
+{%- if title %} <span class="ref-title">{{ title_of(collection, id) | trim }}</span>{% endif -%}
+{%- else -%}
+<span class="ref ref-missing" title="no page: hidden or deleted">{{ key }}</span> <span class="tag">not shown</span>
+{%- endif -%}
+{%- endmacro -%}
+
+{#- A list of references to one collection, one per line. -#}
+{%- macro refs(collection, items) -%}
+{%- if items -%}
+<ul class="ref-list">{% for x in items %}<li>{{ ref(collection, x.id) }}</li>{% endfor %}</ul>
+{%- else -%}<span class="v-none">[]</span>
+{%- endif -%}
+{%- endmacro -%}
+
+{#- An image, linked to its asset page. `a` is selected with `__typename id path`. -#}
+{%- macro thumb(a, cls="thumb") -%}
+<a class="img-link" href="{{ url('assets/' ~ a.id ~ '/') }}"><img class="{{ cls }}" src="{{ asset_url(a) }}" alt="{{ a.get('alt') or a.path }}" loading="lazy"></a>
+{%- endmacro -%}
+
+{#- An asset reference (optional field): the asset page link and the image, or None. -#}
+{%- macro asset_ref(a) -%}
+{%- if a %}{{ ref('assets', a.id, false) }} <span class="ref-title">{{ a.path }}</span>
+<div class="preview">{{ thumb(a, "shot") }}</div>
+{%- else %}{{ value(none) }}{% endif -%}
+{%- endmacro -%}
+
+{#- A rich-style two-column key/value table: {% call rich.kv() %} rows {% endcall %}. -#}
+{%- macro kv() -%}
+<table class="kv"><tbody>{{ caller() }}</tbody></table>
+{%- endmacro -%}
+{#- One row; the value is `html` (a macro result), or the call block's content. -#}
+{%- macro row(key, html=none) -%}
+<tr><th scope="row">{{ key }}</th><td>{{ html if html is not none else caller() }}</td></tr>
+{%- endmacro -%}
+
+{#- The entity's own bookkeeping fields, dimmed. -#}
+{%- macro meta(e) -%}
+{%- call kv() -%}
+{%- if e.position is defined %}{{ row('position', value(e.position)) }}{% endif -%}
+{%- if e.hidden is defined %}{{ row('hidden', value(e.hidden)) }}{% endif -%}
+{{ row('version', value(e.version)) }}
+{{ row('createdAt', value(e.createdAt)) }}
+{{ row('updatedAt', value(e.updatedAt)) }}
+{%- endcall -%}
+{%- endmacro -%}
+
+{#- Reviews pointing at an entity (the `reviews` field most entities have). -#}
+{%- macro reviews(items) -%}
+{%- if items -%}
+<table class="grid"><thead><tr><th>review</th><th>status</th><th>field</th></tr></thead><tbody>
+{%- for r in items %}
+<tr><td>{{ ref('reviews', r.id, false) }}</td><td>{{ status(r.status) }}</td><td>{{ value(r.target.field) }}</td></tr>
+{%- endfor %}
+</tbody></table>
+{%- else -%}<span class="v-none">[]</span>
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro status(s) -%}<span class="tag tag-{{ s }}">{{ s }}</span>{%- endmacro -%}
+
+{#- A `[hidden]` tag for hidden entities (only rendered with --include-hidden). -#}
+{%- macro hidden_tag(e) -%}{% if e.get('hidden') %} <span class="tag tag-hidden">hidden</span>{% endif %}{%- endmacro -%}
+
+{#- Previous / next entity in a collection, in position order. -#}
+{%- macro siblings(collection, id) -%}
+{%- set items = site[collection] -%}
+<nav class="siblings" aria-label="Previous and next">
+{%- set ids = items | map(attribute='id') | list -%}
+{%- set i = ids.index(id) if id in ids else -1 -%}
+{%- if i > 0 %}<a href="{{ url(collection ~ '/' ~ ids[i - 1] ~ '/') }}" rel="prev">&lt; prev {{ ids[i - 1] }}</a>{% else %}<span class="dim">&lt; prev</span>{% endif %}
+<span class="dim">[{{ i + 1 }}/{{ ids | length }}]</span>
+{%- if i >= 0 and i + 1 < ids | length %}<a href="{{ url(collection ~ '/' ~ ids[i + 1] ~ '/') }}" rel="next">next {{ ids[i + 1] }} &gt;</a>{% else %}<span class="dim">next &gt;</span>{% endif %}
+</nav>
+{%- endmacro -%}
+
+{#- The end of every entity page: the reviews pointing at it (when it can have any),
+    its bookkeeping fields, and previous / next in its collection. -#}
+{%- macro tail(collection, e) -%}
+{%- if e.reviews is defined %}
+{% call panel("reviews (" ~ e.reviews | length ~ ")", "open review items") %}{{ reviews(e.reviews) }}{% endcall %}
+{%- endif %}
+{% call panel("meta") %}{{ meta(e) }}{% endcall %}
+{%- if collection != 'business' %}
+{{ siblings(collection, e.id) }}
+{%- endif %}
+{%- endmacro -%}
+

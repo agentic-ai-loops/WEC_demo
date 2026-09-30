@@ -1,0 +1,6 @@
+query Entity($id: ID!) {
+  e: affiliation(id: $id) {
+    id name description url logo { __typename id path alt } version createdAt updatedAt
+    position hidden
+  }
+}

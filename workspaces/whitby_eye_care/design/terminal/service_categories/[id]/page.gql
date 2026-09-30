@@ -1,0 +1,5 @@
+query Entity($id: ID!) {
+  e: serviceCategory(id: $id) {
+    id name services { id } version createdAt updatedAt position hidden
+  }
+}

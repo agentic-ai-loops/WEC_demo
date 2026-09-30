@@ -1,0 +1,26 @@
+{% extends "_layouts/base.html.j2" %}
+{#- One Asset: every field, its relations as links, the reviews pointing at it. -#}
+{% block title %}assets/{{ params.id }}{% endblock %}
+{% block main %}
+{%- import "_partials/rich.html.j2" as rich with context -%}
+{%- set e = data.e -%}
+{% call rich.panel(e.path | truncate(70, true, '…', 0), "Asset · assets/" ~ e.id, cls="panel-strong panel-head") %}
+{%- if e.get('hidden') %}<p class="warn">hidden: not on the public site</p>{% endif %}
+{% call rich.kv() %}
+{{ rich.row('id', rich.value(e.id)) }}
+{{ rich.row('type', rich.value(e.type)) }}
+{{ rich.row('path', rich.value(e.path)) }}
+{{ rich.row('alt', rich.value(e.alt)) }}
+{% endcall %}
+{% endcall %}
+{% call rich.panel("preview") %}
+<figure class="preview"><img src="{{ asset_url(e) }}" alt="{{ e.alt }}" loading="lazy"><figcaption>resources/{{ e.path }}</figcaption></figure>
+{% endcall %}
+{% call rich.panel("relations") %}{% call rich.kv() %}
+{% call rich.row('usedBy') %}
+{%- if e.usedBy %}<ul class="ref-list">{% for u in e.usedBy %}<li>{{ rich.ref(u.collection, u.id) }}{% if u.field %} <span class="grey">.{{ u.field }}</span>{% endif %}</li>{% endfor %}</ul>
+{%- else %}<span class="v-none">[]</span> <span class="tag tag-open">unused</span>{% endif -%}
+{% endcall %}
+{% endcall %}{% endcall %}
+{{ rich.tail('assets', e) }}
+{% endblock %}

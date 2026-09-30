@@ -1,0 +1,2 @@
+# One page per assets entity.
+query { assets { __typename id path } }

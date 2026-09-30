@@ -1,0 +1,22 @@
+{% extends "_layouts/base.html.j2" %}
+{#- One ReviewItem: every field, its relations as links, the reviews pointing at it. -#}
+{% block title %}reviews/{{ params.id }}{% endblock %}
+{% block main %}
+{%- import "_partials/rich.html.j2" as rich with context -%}
+{%- set e = data.e -%}
+{% call rich.panel(e.id | truncate(70, true, '…', 0), "ReviewItem · reviews/" ~ e.id, cls="panel-strong panel-head") %}
+{%- if e.get('hidden') %}<p class="warn">hidden: not on the public site</p>{% endif %}
+{% call rich.kv() %}
+{{ rich.row('id', rich.value(e.id)) }}
+{% call rich.row('status') %}{{ rich.status(e.status) }}{% endcall %}
+{{ rich.row('note', rich.value(e.note)) }}
+{{ rich.row('resolution', rich.value(e.resolution)) }}
+{% endcall %}
+{% endcall %}
+{% call rich.panel("target") %}{% call rich.kv() %}
+{% call rich.row('entity') %}{{ rich.ref(e.target.collection, e.target.id) }}{% endcall %}
+{{ rich.row('field', rich.value(e.target.field)) }}
+{% call rich.row('type') %}{{ rich.value(e.target.entity.__typename if e.target.entity else none) }}{% endcall %}
+{% endcall %}{% endcall %}
+{{ rich.tail('reviews', e) }}
+{% endblock %}

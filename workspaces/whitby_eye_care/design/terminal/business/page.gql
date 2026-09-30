@@ -1,0 +1,7 @@
+query Business {
+  e: business {
+    name legalName tagline category description brands serviceAreas servingSince
+    paymentMethods logo { __typename id path alt } favicon { __typename id path alt }
+    reviews { id status target { field } } version createdAt updatedAt
+  }
+}

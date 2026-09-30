@@ -1,0 +1,20 @@
+{% extends "_layouts/base.html.j2" %}
+{#- One Affiliation: every field, its relations as links, the reviews pointing at it. -#}
+{% block title %}affiliations/{{ params.id }}{% endblock %}
+{% block main %}
+{%- import "_partials/rich.html.j2" as rich with context -%}
+{%- set e = data.e -%}
+{% call rich.panel(e.name | truncate(70, true, '…', 0), "Affiliation · affiliations/" ~ e.id, cls="panel-strong panel-head") %}
+{%- if e.get('hidden') %}<p class="warn">hidden: not on the public site</p>{% endif %}
+{% call rich.kv() %}
+{{ rich.row('id', rich.value(e.id)) }}
+{{ rich.row('name', rich.value(e.name)) }}
+{{ rich.row('description', rich.value(e.description)) }}
+{% call rich.row('url') %}{% if e.url %}<a href="{{ e.url }}">{{ e.url }}</a>{% else %}{{ rich.value(none) }}{% endif %}{% endcall %}
+{% endcall %}
+{% endcall %}
+{% call rich.panel("relations") %}{% call rich.kv() %}
+{% call rich.row('logo') %}{{ rich.asset_ref(e.logo) }}{% endcall %}
+{% endcall %}{% endcall %}
+{{ rich.tail('affiliations', e) }}
+{% endblock %}

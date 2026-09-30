@@ -1,0 +1,18 @@
+# The entity index, for every page: which entity pages exist (hidden ones only with
+# --include-hidden), a title for every reference, and previous / next links.
+# The aliases are the Collection enum names, which are also the route folders.
+query Index {
+  business { name favicon { __typename id path } }
+  contacts: contactPoints { id title: label hidden }
+  locations { id title: name hidden }
+  service_categories: serviceCategories { id title: name hidden }
+  services { id title: name hidden }
+  product_categories: productCategories { id title: name hidden }
+  staff { id title: name hidden }
+  faqs { id title: question hidden }
+  social_links: socialLinks { id title: label hidden }
+  affiliations { id title: name hidden }
+  actions { id title: label hidden }
+  assets { __typename id path title: path }
+  reviews(status: null) { id title: note status }
+}

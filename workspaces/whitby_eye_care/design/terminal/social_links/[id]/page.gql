@@ -1,0 +1,5 @@
+query Entity($id: ID!) {
+  e: socialLink(id: $id) {
+    id platform label url version createdAt updatedAt position hidden
+  }
+}

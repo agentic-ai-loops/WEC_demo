@@ -1,0 +1,5 @@
+query Entity($id: ID!) {
+  e: faq(id: $id) {
+    id question answer services { id } version createdAt updatedAt position hidden
+  }
+}

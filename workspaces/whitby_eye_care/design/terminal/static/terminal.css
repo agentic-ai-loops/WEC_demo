@@ -1,0 +1,149 @@
+/* Business data terminal: a light, monochrome terminal. Monospace only; black and grey
+   on white and light grey. Panels and tables after Python rich. */
+
+/* IBM Plex Mono (IBM, SIL OFL 1.1) — see IBM-PLEX-MONO-LICENSE.txt */
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: italic; font-weight: 400; font-display: swap; src: url("fonts/ibm-plex-mono-latin-400-italic.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/ibm-plex-mono-latin-700-normal.woff2") format("woff2"); }
+
+:root {
+  --ink: #111;          /* text */
+  --grey: #555;         /* secondary text */
+  --dim: #8a8a8a;       /* None, rules, bookkeeping */
+  --line: #b5b5b5;      /* panel borders */
+  --screen: #fbfbfb;    /* the terminal screen */
+  --desk: #dcdcdc;      /* around the window */
+  --bar: #ececec;       /* title and status bars */
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { font-size: 15px; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--desk); color: var(--ink);
+  font: 400 1rem/1.55 var(--mono); font-variant-ligatures: none;
+}
+h1, h2, h3, h4, p, ul, table { margin: 0 0 .9rem; }
+h1, h2, h3, h4 { font-size: 1rem; font-weight: 700; }
+input, button, select, textarea { font: inherit; }
+
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--dim); text-underline-offset: .2em; }
+a:hover { background: var(--ink); color: var(--screen); text-decoration: none; }
+a:focus-visible { outline: 1px dashed var(--ink); outline-offset: 2px; }
+::selection { background: var(--ink); color: var(--screen); }
+
+/* ---- the window --------------------------------------------------------------------- */
+.term {
+  max-width: 1100px; margin: 1.5rem auto; background: var(--screen);
+  border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+  box-shadow: 0 1px 0 #fff inset, 0 10px 30px rgba(0, 0, 0, .12);
+}
+.term-bar {
+  display: flex; align-items: center; gap: 1ch; padding: .45rem 1.5ch;
+  background: var(--bar); border-bottom: 1px solid var(--line); color: var(--grey); font-size: .87rem;
+}
+.term-dots { display: inline-flex; gap: .45rem; flex: none; }
+.term-dots i { width: .7rem; height: .7rem; border-radius: 50%; border: 1px solid var(--dim); background: var(--screen); }
+.term-name { flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 4.5ch; }
+.term-screen { padding: 1.25rem 2.5ch 1.5rem; }
+.term-status {
+  display: flex; flex-wrap: wrap; gap: .1rem 3ch; padding: .35rem 1.5ch;
+  background: var(--bar); border-top: 1px solid var(--line); color: var(--grey); font-size: .8rem;
+}
+
+/* ---- breadcrumb ----------------------------------------------------------------------- */
+.crumbs { margin: 0 0 1.1rem; overflow-wrap: anywhere; font-weight: 700; }
+.crumbs .sep { color: var(--dim); font-weight: 400; }
+.warn { border: 1px dashed var(--ink); padding: .35rem 1ch; font-weight: 700; }
+
+/* ---- rich Panel: title and subtitle sit in the border -------------------------------- */
+.panel {
+  position: relative; margin: 1.9rem 0 1.4rem; padding: 1.15rem 2ch .95rem;
+  border: 1px solid var(--line); border-radius: 7px;
+}
+.panel-title, .panel-subtitle {
+  position: absolute; left: 50%; transform: translate(-50%, -50%); margin: 0;
+  max-width: calc(100% - 6ch); padding: 0 1ch; background: var(--screen);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;
+}
+.panel-title { top: 0; font-weight: 700; }
+.panel-subtitle { top: 100%; color: var(--grey); font-size: .87rem; }
+.panel-body > :last-child { margin-bottom: 0; }
+.panel .panel { margin-top: 1.6rem; }
+.panel-strong { border-color: var(--ink); }
+.panel-head { font-size: 1.07rem; }
+.panel-head .panel-title { font-size: 1.07rem; }
+
+/* ---- rich Table ------------------------------------------------------------------- */
+.scroll { overflow-x: auto; margin: 0 0 .9rem; }
+.scroll > table { margin: 0; }
+table { border-collapse: collapse; width: 100%; }
+th { text-align: left; }
+.kv th {
+  width: 1%; white-space: nowrap; padding: .12rem 2ch .12rem 0; vertical-align: top;
+  font-weight: 400; color: var(--grey);
+}
+.kv td { padding: .12rem 0; vertical-align: top; overflow-wrap: anywhere; }
+.kv .kv { margin: .15rem 0 .3rem; }
+.grid th { font-weight: 700; border-bottom: 2px solid var(--ink); padding: .1rem 2ch .2rem 0; white-space: nowrap; }
+.grid td { padding: .22rem 2ch .22rem 0; vertical-align: top; border-bottom: 1px dotted var(--line); }
+.grid tr:last-child td { border-bottom: 0; }
+.grid td.wrap { overflow-wrap: anywhere; }
+.grid td:first-child { white-space: nowrap; }
+.grid tr.is-hidden td { color: var(--grey); }
+.num { text-align: right; color: var(--grey); width: 1%; white-space: nowrap; }
+
+/* ---- values ------------------------------------------------------------------------ */
+.v-none { color: var(--dim); font-style: italic; }
+.v-bool { font-weight: 700; }
+.v-text { display: block; white-space: pre-line; max-width: 80ch; }
+.v-item { white-space: nowrap; }
+.dim { color: var(--dim); }
+.grey { color: var(--grey); }
+.ref { font-weight: 700; }
+.ref-title { color: var(--grey); }
+.ref-missing { color: var(--dim); font-weight: 400; text-decoration: line-through; }
+.ref-list { list-style: none; padding: 0; margin: 0; }
+.tag { color: var(--grey); white-space: nowrap; }
+.tag::before { content: "["; }
+.tag::after { content: "]"; }
+.tag-open, .tag-hidden { color: var(--ink); font-weight: 700; }
+.tag-resolved, .tag-dismissed { color: var(--dim); }
+.lead { max-width: 80ch; }
+
+/* ---- sections on the front page ----------------------------------------------------- */
+.toc { display: flex; flex-wrap: wrap; gap: .2rem 2.5ch; list-style: none; padding: 0; }
+.toc .count { color: var(--grey); }
+
+/* ---- navigation between entities ----------------------------------------------------- */
+.siblings { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .3rem 2ch; margin-top: 1.2rem; }
+
+/* ---- images, in their own colours (the only colour on the page) -------------------- */
+.preview { margin: 0 0 .9rem; }
+.preview img {
+  display: block; max-width: min(100%, 420px); max-height: 320px; height: auto;
+  border: 1px solid var(--line); background: #fff;
+}
+.preview figcaption { color: var(--grey); font-size: .87rem; margin-top: .3rem; }
+.kv .preview { margin: .45rem 0 .2rem; }
+.shot { display: block; max-width: min(100%, 260px); max-height: 200px; width: auto; height: auto; border: 1px solid var(--line); background: #fff; }
+.thumb { display: block; width: 3.2rem; height: 3.2rem; object-fit: contain; border: 1px solid var(--line); background: #fff; }
+a.img-link { display: inline-block; text-decoration: none; }
+a.img-link:hover { background: none; }
+a.img-link:hover img { border-color: var(--ink); }
+
+/* ---- phones ------------------------------------------------------------------------ */
+@media (max-width: 700px) {
+  html { font-size: 13.5px; }
+  .term { margin: 0; border-radius: 0; border-left: 0; border-right: 0; }
+  .term-screen { padding: 1rem 1.5ch 1.25rem; }
+  .panel { padding: 1.05rem 1.5ch .85rem; }
+  .kv th { padding-right: 1.5ch; }
+  .opt { display: none; }
+}
+@media (max-width: 420px) {
+  .kv, .kv tbody, .kv tr, .kv th, .kv td { display: block; width: auto; }
+  .kv th { padding: .3rem 0 0; }
+  .kv td { padding: 0 0 .15rem 2ch; }
+}

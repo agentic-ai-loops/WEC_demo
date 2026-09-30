@@ -1,0 +1,18 @@
+{% extends "_layouts/base.html.j2" %}
+{#- One SocialLink: every field, its relations as links, the reviews pointing at it. -#}
+{% block title %}social_links/{{ params.id }}{% endblock %}
+{% block main %}
+{%- import "_partials/rich.html.j2" as rich with context -%}
+{%- set e = data.e -%}
+{% call rich.panel(e.label | truncate(70, true, '…', 0), "SocialLink · social_links/" ~ e.id, cls="panel-strong panel-head") %}
+{%- if e.get('hidden') %}<p class="warn">hidden: not on the public site</p>{% endif %}
+{% call rich.kv() %}
+{{ rich.row('id', rich.value(e.id)) }}
+{{ rich.row('platform', rich.value(e.platform)) }}
+{{ rich.row('label', rich.value(e.label)) }}
+{% call rich.row('url') %}<a href="{{ e.url }}">{{ e.url }}</a>{% endcall %}
+{% endcall %}
+{% endcall %}
+
+{{ rich.tail('social_links', e) }}
+{% endblock %}

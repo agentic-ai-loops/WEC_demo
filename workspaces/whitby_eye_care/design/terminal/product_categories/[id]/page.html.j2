@@ -1,0 +1,19 @@
+{% extends "_layouts/base.html.j2" %}
+{#- One ProductCategory: every field, its relations as links, the reviews pointing at it. -#}
+{% block title %}product_categories/{{ params.id }}{% endblock %}
+{% block main %}
+{%- import "_partials/rich.html.j2" as rich with context -%}
+{%- set e = data.e -%}
+{% call rich.panel(e.name | truncate(70, true, '…', 0), "ProductCategory · product_categories/" ~ e.id, cls="panel-strong panel-head") %}
+{%- if e.get('hidden') %}<p class="warn">hidden: not on the public site</p>{% endif %}
+{% call rich.kv() %}
+{{ rich.row('id', rich.value(e.id)) }}
+{{ rich.row('name', rich.value(e.name)) }}
+{{ rich.row('description', rich.value(e.description)) }}
+{% endcall %}
+{% endcall %}
+{% call rich.panel("relations") %}{% call rich.kv() %}
+{% call rich.row('image') %}{{ rich.asset_ref(e.image) }}{% endcall %}
+{% endcall %}{% endcall %}
+{{ rich.tail('product_categories', e) }}
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "_layouts/base.html.j2" %}
+{#- The business singleton: every field. -#}
+{% block title %}business{% endblock %}
+{% block main %}
+{%- import "_partials/rich.html.j2" as rich with context -%}
+{%- set e = data.e -%}
+{% call rich.panel(e.name, "Business · business", cls="panel-strong panel-head") %}
+{% call rich.kv() %}
+{{ rich.row('name', rich.value(e.name)) }}
+{{ rich.row('legalName', rich.value(e.legalName)) }}
+{{ rich.row('tagline', rich.value(e.tagline)) }}
+{{ rich.row('category', rich.value(e.category)) }}
+{{ rich.row('servingSince', rich.value(e.servingSince)) }}
+{{ rich.row('description', rich.value(e.description)) }}
+{{ rich.row('serviceAreas', rich.value(e.serviceAreas)) }}
+{{ rich.row('paymentMethods', rich.value(e.paymentMethods)) }}
+{{ rich.row('brands', rich.value(e.brands)) }}
+{% endcall %}
+{% endcall %}
+{% call rich.panel("relations") %}{% call rich.kv() %}
+{% call rich.row('logo') %}{{ rich.asset_ref(e.logo) }}{% endcall %}
+{% call rich.row('favicon') %}{{ rich.asset_ref(e.favicon) }}{% endcall %}
+{% endcall %}{% endcall %}
+{{ rich.tail('business', e) }}
+{% endblock %}
