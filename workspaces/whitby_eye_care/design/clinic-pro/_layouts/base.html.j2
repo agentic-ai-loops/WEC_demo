@@ -1,0 +1,137 @@
+{#- The shell of every page: navigation with the customer actions, the page's `main`
+    block, and the footer. On phones the actions move to a fixed bar at the bottom. -#}
+{%- import "_partials/ui.html.j2" as ui with context -%}
+{%- set b = site.business -%}
+{%- set loc = site.locations[0] if site.locations else none -%}
+{%- set actions = [site.bookAppointment, site.callClinic, site.reorderLenses] | select | list -%}
+{%- set section = path.split("/")[0] if "/" in path else "" -%}
+<!doctype html>
+<html lang="en" class="no-js" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    /* the saved theme, applied before the page paints (light is the default) */
+    try {
+      var t = localStorage.getItem("clinic-theme");
+      if (t === "dark" || t === "light") document.documentElement.setAttribute("data-bs-theme", t);
+    } catch (e) {}
+  </script>
+  <meta name="color-scheme" content="light dark">
+  <title>{% block title %}{{ b.name }} — {{ b.category }}{% endblock %}</title>
+  <meta name="description" content="{% block description %}{{ b.tagline }}{% endblock %}">
+  {% if b.favicon %}<link rel="icon" href="{{ asset_url(b.favicon) }}">{% endif %}
+  <link rel="preload" href="{{ url('assets/fonts/atkinson-hyperlegible-latin-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ url('assets/fonts/fraunces-latin-opsz-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ url('assets/fonts/cormorant-garamond-latin-600-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{{ url('assets/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url('assets/bootstrap-icons.min.css') }}">
+  <link rel="stylesheet" href="{{ url('assets/site.css') }}">
+  {#- the palette of each theme, from _config.json, as --c-<token> variables -#}
+  <style>
+    :root, [data-bs-theme="light"] { {% for k, v in config.options.get("light", {}).items() %}--c-{{ k }}: {{ v }}; {% endfor %}}
+    [data-bs-theme="dark"] { {% for k, v in config.options.get("dark", {}).items() %}--c-{{ k }}: {{ v }}; {% endfor %}}
+  </style>
+</head>
+<body data-render="{{ url('render.json') }}" class="{{ 'has-action-bar' if actions }}">
+<a class="visually-hidden-focusable skip-link" href="#main">Skip to content</a>
+
+<nav class="navbar navbar-expand-xl sticky-top site-nav" aria-label="Main">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url('') }}">
+      {% if b.logo %}<img src="{{ asset_url(b.logo) }}" alt="" width="40" height="40">{% endif %}
+      <span>{{ b.name }}</span>
+    </a>
+    <button class="theme-toggle ms-auto me-2 order-xl-last ms-xl-2 me-xl-0" type="button" data-theme-toggle
+            aria-label="Switch to dark theme" title="Switch theme">
+      {{ ui.icon("moon-stars-fill", "icon-to-dark") }}{{ ui.icon("sun-fill", "icon-to-light") }}
+    </button>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-menu"
+            aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav-menu">
+      <ul class="navbar-nav me-auto mb-2 mb-xl-0">
+        <li class="nav-item"><a class="nav-link{{ ' active' if path == 'index.html' }}" href="{{ url('') }}"{% if path == 'index.html' %} aria-current="page"{% endif %}>Home</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle{{ ' active' if section == 'services' }}" href="{{ url('') }}#services" role="button" data-bs-toggle="dropdown" aria-expanded="false">Services</a>
+          <ul class="dropdown-menu dropdown-menu-wide">
+            {%- for c in site.serviceCategories if c.services %}
+            <li><h6 class="dropdown-header">{{ c.name }}</h6></li>
+            {%- for s in c.services %}
+            <li><a class="dropdown-item" href="{{ url('services/' ~ s.id ~ '/') }}">{{ s.name }}</a></li>
+            {%- endfor %}
+            {%- endfor %}
+          </ul>
+        </li>
+        {%- if site.staff %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle{{ ' active' if section == 'staff' }}" href="{{ url('') }}#doctors" role="button" data-bs-toggle="dropdown" aria-expanded="false">Our Doctors</a>
+          <ul class="dropdown-menu">
+            {%- for s in site.staff %}
+            <li><a class="dropdown-item" href="{{ url('staff/' ~ s.id ~ '/') }}">{{ s.name }}<small class="d-block text-secondary">{{ s.role }}</small></a></li>
+            {%- endfor %}
+          </ul>
+        </li>
+        {%- endif %}
+        <li class="nav-item"><a class="nav-link{{ ' active' if section == 'faq' }}" href="{{ url('faq/') }}">FAQ</a></li>
+        <li class="nav-item"><a class="nav-link{{ ' active' if section == 'booking' }}" href="{{ url('booking/') }}">Booking</a></li>
+      </ul>
+      <div class="d-none d-xl-flex gap-2 nav-actions">
+        {#- the call button needs the extra width of xxl screens; it is in the hero anyway -#}
+        {{ ui.action_button(site.callClinic, "btn btn-outline-primary btn-sm d-none d-xxl-inline-block") }}
+        {{ ui.action_button(site.bookAppointment, "btn btn-primary btn-sm") }}
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+{% block main %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          {% if b.logo %}<img src="{{ asset_url(b.logo) }}" alt="" width="36" height="36">{% endif %}
+          <strong class="fs-5">{{ b.name }}</strong>
+        </div>
+        <p class="footer-muted">{{ b.tagline }}</p>
+        {{ ui.social_links(site.socialLinks) }}
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <h2 class="footer-title">Visit us</h2>
+        {% if loc %}{{ ui.address_block(loc) }}
+        <p class="mt-2 mb-0"><span class="open-status" data-open-status></span></p>{% endif %}
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <h2 class="footer-title">Contact</h2>
+        <div class="d-grid gap-2">
+          {{ ui.contact_line(site.mainPhone) }}
+          {{ ui.contact_line(site.generalEmail) }}
+          {{ ui.contact_line(site.appointmentsEmail) }}
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© {{ b.name }}{% if b.servingSince %} · caring for eyes since {{ b.servingSince }}{% endif %}</span>
+      <span>Updated <time class="js-local-date" datetime="{{ render.businessdata.updated_at or render.rendered_at }}">{{ (render.businessdata.updated_at or render.rendered_at)[:10] }}</time></span>
+    </div>
+  </div>
+</footer>
+
+{%- if actions %}
+<div class="action-bar d-xl-none" role="navigation" aria-label="Quick actions">
+  {%- for a in actions %}{{ ui.action_button(a, "action-bar-item", short=True) }}{% endfor %}
+</div>
+{%- endif %}
+
+{%- if loc %}
+<script type="application/json" id="clinic-hours">{{ loc.hours | tojson }}</script>
+{%- endif %}
+<script src="{{ url('assets/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url('assets/site.js') }}"></script>
+</body>
+</html>

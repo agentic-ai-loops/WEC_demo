@@ -13,7 +13,7 @@ from intelliw.businessdata.database import create_db_engine, init_db, session_fa
 from intelliw.businessdata.schema import BusinessData
 from intelliw.workspace import Workspace
 
-DEMO = Path(__file__).parent.parent / "examples" / "demo"
+DEMO = Path(__file__).parent.parent / "workspaces" / "demo"
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -33,6 +33,16 @@ def demo_ws(tmp_path: Path) -> Workspace:
     root = tmp_path / "demo"
     shutil.copytree(DEMO, root, ignore=shutil.ignore_patterns("_site"))
     return Workspace(root)
+
+
+def sites_dir(ws: Workspace) -> Path:
+    """The sites folder of a test workspace: `{run_dir}/sites` with run_dir next to it."""
+    return ws.root.parent / "run" / "sites"
+
+
+def site(ws: Workspace, design: str) -> Path:
+    """Where `design`'s site is rendered: `{run_dir}/sites/{workspace}/{design}/`."""
+    return sites_dir(ws) / ws.root.name / design
 
 
 @pytest.fixture

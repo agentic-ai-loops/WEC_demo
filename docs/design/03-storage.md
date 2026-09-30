@@ -23,7 +23,7 @@ snapshots — stored side by side, and rollback to any snapshot always possible 
   - The GraphQL API and its mutations (02-graphql-api).
   - The purge admin tool (removing deleted entities).
   - Retiring old snapshots (02-graphql-api, open questions).
-  - Importing `digest.xml` (a one-off script, `examples/import_whitby_digest.py`).
+  - Importing `digest.xml` (a one-off script, `workspaces/import_whitby_digest.py`).
   - Concurrent writers.
 
 ## Specification

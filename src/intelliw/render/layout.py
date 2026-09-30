@@ -51,6 +51,11 @@ def list_designs(ws: Workspace) -> list[str]:
     )
 
 
+def site_dir(sites_dir: Path, ws: Workspace, design: str) -> Path:
+    """Where a design's rendered site goes: `{sites_dir}/{workspace}/{design}/`."""
+    return sites_dir / ws.root.name / design
+
+
 def version_name(number: int | None, tag: str | None) -> str:
     """The output folder name of a #businessdata version: `active`, `3`, `4_Spring-2026`."""
     if number is None:

@@ -20,7 +20,7 @@ GraphQL queries at render time.
   - the template contract: context variables and helpers; relative links;
   - render options: the #businessdata version, and whether hidden entities are included;
   - `_config.json`;
-  - rendering into `outputs/<version_name>/`: the walk, output paths, publishing
+  - rendering into `{run_dir}/sites/{workspace}/{design}/`: the walk, output paths, publishing
     business images, the published render metadata (`render.json`),
     atomic replacement, sandboxing;
   - the design check.
@@ -68,10 +68,15 @@ bundle named `<name>`:
       ...
     clinic-dark/          # design "clinic-dark"
       ...
-  outputs/
-    active/               # the active version, rendered with one design
-    3/                    # snapshot 3 (no tag)
-    4_Spring-2026/        # snapshot 4, tagged "Spring 2026"
+```
+
+The rendered sites live outside the workspace, in the server's run directory:
+
+```
+{run_dir}/sites/            # run_dir: INTELLIW_RUN_DIR, default ./run
+  whitby_eye_care/          # the workspace's folder name
+    clinic-light/           # the site of design "clinic-light"
+    clinic-dark/
 ```
 
 - A design name matches `[a-z0-9][a-z0-9-]*`, and the folder name is the design's name.
@@ -81,32 +86,38 @@ bundle named `<name>`:
   nothing is shared or inherited between designs. To start a new design from an
   existing one, copy its folder.
 - **The site is rendered with one design**, named on every render:
-  `build(workspace, design, ...)` renders `design/<design>/` into the output folder of
-  the rendered #businessdata version (options in *Render options*). A name with no
-  design folder is an error.
+  `build(workspace, design, ...)` renders `design/<design>/` into that design's output
+  folder (options in *Render options*). A name with no design folder is an error.
 - This replaces the `templates/` + `assets/` split and `_site/` in 00-architecture.
 
 ### Output folders
 
-A render writes to `<workspace>/outputs/<version_name>/`, where `<version_name>` names
-the #businessdata version that was rendered:
+A render writes to `{run_dir}/sites/{workspace}/{design}/`: one folder per design of each
+workspace, so every design's site exists side by side.
 
-| Rendered version | `<version_name>` | Example |
-| --- | --- | --- |
-| the active version | `active` | `outputs/active/` |
-| snapshot `<n>` without a tag | `<n>` | `outputs/3/` |
-| snapshot `<n>` with tag `<tag>` | `<n>_<tag>` | `outputs/4_Spring-2026/` |
+- `run_dir` is the server's run directory (`INTELLIW_RUN_DIR`, default `./run`; the `render`
+  CLI also takes `--run-dir`). `workspace` is the workspace folder's name.
+- A render replaces its design's folder completely. Other designs' folders are untouched.
+- The folder holds whatever was rendered last: normally the active version without hidden
+  records (the automatic re-render after every mutation, below). A render of a snapshot
+  (`--version` / `--snapshot`) or with `--include-hidden` goes to the same folder;
+  `render.json` records which data and options it shows, and the next automatic
+  re-render restores the active version.
+- `<version_name>` (`active`, `3`, `4_Spring-2026`: the tag made safe for a folder name)
+  names the rendered data in `render.json`.
+- The *output folder* in the rest of this document is `{run_dir}/sites/{workspace}/{design}/`.
 
-- The tag is made safe for a folder name: every run of characters outside
-  `[A-Za-z0-9._-]` becomes `-`, and case is kept (`Spring 2026` → `Spring-2026`). The
-  snapshot number keeps names unique when two tags look alike after this.
-- The name is taken from the snapshot at render time. It is the same whether the render
-  names the snapshot by number or by tag.
-- A render replaces that output folder completely, whichever design or options produced
-  it before. Output folders of other versions are untouched.
-- Snapshots are read-only, so a snapshot's output changes only when it is rendered
-  again, with a different design or after the design changed.
-- The *output folder* in the rest of this document is `outputs/<version_name>/`.
+### Automatic re-rendering
+
+Every committed GraphQL mutation (through `/graphql` or MCP's `graphql_mutate`) queues a
+job on the re-render queue (rq on Redis, `intelliw.jobs`); a worker (`jobs worker`) runs
+it and re-renders **every** design of the workspace from the active version.
+
+- The job's argument is a `MutationEvent`: the GraphQL mutation's name and when it was
+  committed (UTC).
+- A failing design is reported in the job's result and doesn't stop the others.
+- Queueing never fails a mutation: without Redis the change is kept and the missing
+  re-render is logged. `/health` reports the queue as `jobs`.
 
 In the rest of this document, the *design folder* is `design/<name>/`, and paths are
 relative to it.
@@ -336,7 +347,7 @@ build(workspace, name, options):
   publish business images (*Images*)
   write out/render.json (*Render metadata*)
   check links in out (*Link check*)
-  replace workspace/outputs/<version_name> with out
+  replace {run_dir}/sites/{workspace}/{design} with out
 
 walk(folder, out, params):
   for each file in folder (not _*, not .*):
@@ -419,7 +430,7 @@ the site's own files. A root-relative link (starting with a single `/`, in `href
 source template. So does a relative link to a file that is not in the output. External
 URLs and `#fragment` links are not checked.
 
-**Atomic.** The site is rendered into a new temporary directory in `outputs/`
+**Atomic.** The site is rendered into a new temporary directory next to the output folder
 (`.tmp-<random>`). On success it replaces the output folder: the old one is renamed
 aside, the new one renamed in, then the old one removed. On failure the temporary
 directory is removed and the output folder is unchanged. A failure reports the design file and, for template
@@ -462,13 +473,12 @@ Problems found only by running are render errors: missing keys or duplicates in
 ### Open questions
 
 1. **Which design is published.** Every render names its design, and an output folder
-   holds the latest render of its version (`render.json` says which). If 05-site needs a
+   holds its design's latest render (`render.json` says which data). If 05-site needs a
    standing choice (the owner's current design), it can be a workspace setting that
    `build` falls back to when no name is given.
-2. **Hidden-entity previews share the folder.** A render with `include_hidden` writes
-   to the same output folder as the public render of that version, so previewing the
-   active version with hidden records replaces `outputs/active/`. Should previews get
-   their own name, e.g. `active_hidden`?
+2. **Previews share the folder.** A render of a snapshot or with `include_hidden` writes
+   to the design's one output folder, replacing the public site until the next automatic
+   re-render. Should previews get their own folder?
 3. **The not-found page.** A server shows `404.html` for a missing URL at any depth, so
    its relative links resolve against the missing URL and may break. Options: keep
    `404.html` self-contained (inline CSS, a link to `./` only), or leave it to the
@@ -488,9 +498,14 @@ Problems found only by running are render errors: missing keys or duplicates in
       `_*` / `.*` entries in `design/` are not designs.
 - [x] A template cannot extend or include a file of another design.
 - [x] The design check can check one named design or every design in a workspace.
-- [x] The active version renders to `outputs/active/`, snapshot 3 to `outputs/3/`, and
-      snapshot 4 tagged `Spring 2026` to `outputs/4_Spring-2026/`, whether named by
-      number or by tag; a render leaves other output folders untouched.
+- [x] A design renders to `{run_dir}/sites/{workspace}/{design}/`; a render leaves other
+      designs' folders untouched; `render.json` names the rendered version (`active`,
+      `3`, `4_Spring-2026`), whether the snapshot was named by number or by tag.
+- [x] Every committed GraphQL or MCP mutation queues a re-render job carrying a
+      `MutationEvent` (mutation name, commit time); queries and failed mutations queue
+      nothing; a Redis outage doesn't fail the mutation.
+- [x] The worker re-renders every design from the active version; a failing design
+      doesn't stop the others.
 - [x] `url()` and `asset_url()` give links relative to the output file at every depth;
       the rendered site works unchanged when served from a sub-folder of a web server.
 - [x] A root-relative link or a relative link to a missing file in any `.html` / `.css`
@@ -505,7 +520,7 @@ Problems found only by running are render errors: missing keys or duplicates in
 - [x] A top-level design entry named `resources`, `render.json` or `render.json.j2` is
       reported by the design check.
 - [x] A design with `page.html.j2` + `page.gql` at the top level and in a static
-      subfolder renders `outputs/active/index.html` and `outputs/active/<sub>/index.html`
+      subfolder renders `index.html` and `<sub>/index.html` in its output folder
       with the query data.
 - [x] `[slug]/` with `params.gql` renders one `index.html` per value, with `params.slug`
       in the template and `$slug` in `page.gql`; nested segments receive the enclosing
@@ -558,18 +573,20 @@ Problems found only by running are render errors: missing keys or duplicates in
   - `1`: a check failed or a render error;
   - `2`: a usage error (unknown design or snapshot, both version and snapshot, no
     database).
-- `Workspace`: `design(name)`, `outputs_dir` and `output_dir(version_name)` are added;
+- Sites go to `Settings.sites_dir` (`{run_dir}/sites`), via `site_dir(sites_dir, ws, design)`;
+  the re-render queue is `intelliw.jobs` (models, queue, tasks) with the `jobs` CLI.
+- `Workspace`: `design(name)` is added;
   `templates_dir`, `assets_dir` and `site_dir` are removed. The prototype `intelliw.site`
   builder and the old `templates/` + `assets/` example designs are removed.
 - The Whitby example ships a minimal design,
-  `examples/whitby_eye_care/design/clinic/`: a home page, one page per service, a 404
+  `workspaces/whitby_eye_care/design/clinic/`: a home page, one page per service, a 404
   page, a stylesheet template, and a script that reads `render.json`.
-  `examples/import_whitby_digest.py` now rebuilds only `businessdata/`, keeping the
+  `workspaces/import_whitby_digest.py` now rebuilds only `businessdata/`, keeping the
   designs.
-- A third example design, `examples/whitby_eye_care/design/clinic-pro/`, built from
+- A third example design, `workspaces/whitby_eye_care/design/clinic-pro/`, built from
   `docs/notes/2026-09-27.md` with the `/intelliw:design` skill; its choices are its own
   (see the design folder and `tests/test_clinic_pro_design.py`).
-- A second, generic example design, `examples/whitby_eye_care/design/inspector/`, is a
+- A second, generic example design, `workspaces/whitby_eye_care/design/inspector/`, is a
   developer view of the entire #businessdata on one page.
   - Its `page.gql` selects every field of every collection, with references as
     `{ __typename id }`, plus versions, trash and resource files.

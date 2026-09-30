@@ -1,4 +1,4 @@
-"""Render #businessdata with a design into `outputs/<version_name>/`.
+"""Render #businessdata with a design into `{sites_dir}/{workspace}/{design}/`.
 
 Follows docs/design/04-design.md, *Rendering*: the design check, `site.gql`, the walk
 (dynamic segments expanded by the parent folder), business images, `render.json`, the
@@ -44,6 +44,7 @@ from intelliw.render.layout import (
     output_name,
     relative,
     segment_name,
+    site_dir,
 )
 from intelliw.render.links import check_links
 from intelliw.render.query import QueryRunner
@@ -76,10 +77,14 @@ def render(
     design: str,
     options: RenderOptions = RenderOptions(),  # noqa: B008 - frozen dataclass
     *,
+    sites_dir: Path,
     dry_run: bool = False,
 ) -> RenderResult:
-    """Render the workspace's #businessdata with `design`; raises a `RenderFailure`."""
-    return asyncio.run(render_async(ws, design, options, dry_run=dry_run))
+    """Render the workspace's #businessdata with `design`; raises a `RenderFailure`.
+
+    The site goes to `site_dir(sites_dir, ws, design)` (`{sites_dir}/{workspace}/{design}`).
+    """
+    return asyncio.run(render_async(ws, design, options, sites_dir=sites_dir, dry_run=dry_run))
 
 
 async def render_async(
@@ -87,6 +92,7 @@ async def render_async(
     design: str,
     options: RenderOptions = RenderOptions(),  # noqa: B008
     *,
+    sites_dir: Path,
     dry_run: bool = False,
 ) -> RenderResult:
     design_dir = ws.design(design)
@@ -107,9 +113,9 @@ async def render_async(
     finally:
         engine.dispose()
 
-    output_dir = ws.output_dir(build.version_name)
+    output_dir = site_dir(sites_dir, ws, design)
     if not dry_run:
-        _write(ws.outputs_dir, output_dir, build.files)
+        _write(output_dir.parent, output_dir, build.files)
     return RenderResult(
         design=design,
         version_name=build.version_name,
@@ -307,7 +313,7 @@ def _json(value: Any) -> bytes:
 
 
 def _write(outputs_dir: Path, target: Path, files: dict[str, bytes | Path]) -> None:
-    """Write into a temporary folder, then swap it in for `target`."""
+    """Write into a temporary folder next to `target` (in `outputs_dir`), then swap it in."""
     outputs_dir.mkdir(parents=True, exist_ok=True)
     tmp = Path(tempfile.mkdtemp(prefix=".tmp-", dir=outputs_dir))
     try:

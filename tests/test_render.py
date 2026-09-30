@@ -8,6 +8,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
+from conftest import site, sites_dir
 from sqlalchemy.orm import Session
 
 from intelliw.businessdata import documents, mutations, queries
@@ -20,13 +21,13 @@ from intelliw.render import (
     check_design,
     check_workspace,
     list_designs,
-    render,
     version_name,
 )
+from intelliw.render import render as _render
 from intelliw.render.links import relative_url
 from intelliw.workspace import Workspace
 
-EXAMPLE_DESIGN = Path(__file__).parent.parent / "examples" / "whitby_eye_care" / "design"
+EXAMPLE_DESIGN = Path(__file__).parent.parent / "workspaces" / "whitby_eye_care" / "design"
 
 Design = Callable[..., Path]
 
@@ -62,12 +63,17 @@ def db(ws: Workspace) -> Iterator[Session]:
         engine.dispose()
 
 
-def out(ws: Workspace, name: str = "active") -> Path:
-    return ws.output_dir(name)
+def render(ws: Workspace, design: str, options: RenderOptions = RenderOptions(), **kw):  # noqa: B008
+    """Render into the test workspace's run dir."""
+    return _render(ws, design, options, sites_dir=sites_dir(ws), **kw)
 
 
-def text(ws: Workspace, rel: str, name: str = "active") -> str:
-    return (out(ws, name) / rel).read_text()
+def out(ws: Workspace, design: str = "d") -> Path:
+    return site(ws, design)
+
+
+def text(ws: Workspace, rel: str, design: str = "d") -> str:
+    return (out(ws, design) / rel).read_text()
 
 
 SERVICE_PAGES = {
@@ -189,7 +195,7 @@ def test_hidden_entities_are_left_out_unless_included(ws, design):
     assert info["include_hidden"] is True
 
 
-def test_snapshot_render_goes_to_its_own_folder(ws, design):
+def test_snapshot_render_goes_to_the_design_folder(ws, design):
     with db(ws) as s:
         documents.take_snapshot(s, "Spring 2026")  # snapshot 2
         mutations.update_business(s, {"name": "Renamed"})
@@ -200,14 +206,16 @@ def test_snapshot_render_goes_to_its_own_folder(ws, design):
         }
     )
     render(ws, "d")
+    assert text(ws, "index.html") == "Renamed active"
     by_tag = render(ws, "d", RenderOptions(snapshot="Spring 2026"))
     assert by_tag.version_name == "2_Spring-2026"
-    assert text(ws, "index.html") == "Renamed active"
-    assert text(ws, "index.html", "2_Spring-2026") == "Whitby Eye Care 2_Spring-2026"
+    # every render of a design goes to its one folder; render.json says which data
+    assert by_tag.output_dir == out(ws)
+    assert text(ws, "index.html") == "Whitby Eye Care 2_Spring-2026"
+    assert json.loads(text(ws, "render.json"))["businessdata"]["snapshot"] == "Spring 2026"
     by_number = render(ws, "d", RenderOptions(version=2), dry_run=True)
     assert by_number.version_name == "2_Spring-2026"
-    render(ws, "d", RenderOptions(version=1))
-    assert sorted(p.name for p in ws.outputs_dir.iterdir()) == ["1", "2_Spring-2026", "active"]
+    assert sorted(p.name for p in (sites_dir(ws) / ws.root.name).iterdir()) == ["d"]
 
 
 def test_version_names():
@@ -316,7 +324,7 @@ def test_link_check_fails_the_render(ws, design, page, message):
         render(ws, "d")
     assert exc.value.stage == "link check"
     assert any(message in p.message for p in exc.value.problems), exc.value.problems
-    assert not ws.outputs_dir.exists() or not any(ws.outputs_dir.iterdir())
+    assert not sites_dir(ws).exists() or not any(sites_dir(ws).iterdir())
 
 
 # ---- failures -----------------------------------------------------------------------------
@@ -350,7 +358,7 @@ def test_a_failed_render_leaves_the_previous_output(ws, design, case):
         render(ws, "d")
     assert where in str(exc.value), str(exc.value)
     assert text(ws, "index.html") == before
-    assert sorted(p.name for p in ws.outputs_dir.iterdir()) == ["active"]  # no temp folders
+    assert sorted(p.name for p in (sites_dir(ws) / ws.root.name).iterdir()) == ["d"]  # no temp
 
 
 def test_a_graphql_error_fails_the_render(ws, design, monkeypatch):
@@ -386,7 +394,7 @@ def test_an_unsafe_asset_path_in_the_data_fails_the_render(ws, design):
     design({"site.gql": "{ business { logo { __typename id path } } }", "page.html.j2": "x"})
     with pytest.raises(RenderError, match="string_pattern_mismatch"):  # refused on reading
         render(ws, "d")
-    assert not ws.outputs_dir.exists()
+    assert not sites_dir(ws).exists()
 
 
 def test_design_symlinks_out_of_the_design_are_refused(ws, design, tmp_path_factory):
@@ -402,7 +410,7 @@ def test_design_symlinks_out_of_the_design_are_refused(ws, design, tmp_path_fact
     (root / "page.html.j2").write_text('{% include "_partials/leak.html.j2" %}')
     with pytest.raises(RenderError, match="links outside the design folder"):
         render(ws, "d")
-    assert not ws.outputs_dir.exists()
+    assert not sites_dir(ws).exists()
 
 
 def test_template_errors_name_the_line(ws, design):
@@ -421,7 +429,7 @@ def test_template_errors_name_the_line(ws, design):
 def test_dry_run_writes_nothing_but_still_fails(ws, design):
     design(GOOD)
     result = render(ws, "d", dry_run=True)
-    assert not result.written and not ws.outputs_dir.exists()
+    assert not result.written and not sites_dir(ws).exists()
     assert "services/eye-exams/index.html" in result.files
     design({"page.html.j2": "{{ nope }}"})
     with pytest.raises(RenderError):
@@ -437,7 +445,7 @@ def test_designs_are_separate(ws, design):
     design({"page.html.j2": "C"}, name="_shared")
     assert list_designs(ws) == ["a", "b"]
     render(ws, "a")
-    assert text(ws, "index.html") == "A"
+    assert text(ws, "index.html", "a") == "A"
     with pytest.raises(RenderError):  # templates load only from their own design
         render(ws, "b")
     with pytest.raises(DesignNotFound):
@@ -450,9 +458,10 @@ def test_the_example_design_renders(ws):
     shutil.copytree(EXAMPLE_DESIGN / "clinic", ws.design("clinic"))
     result = render(ws, "clinic")
     assert result.pages == 1 + 3
-    home = text(ws, "index.html")
+    assert result.output_dir == site(ws, "clinic")
+    home = text(ws, "index.html", "clinic")
     assert "Whitby Eye Care" in home and 'href="services/dry-eye-testing/"' in home
-    assert (out(ws) / "resources" / "logo.png").is_file()
+    assert (out(ws, "clinic") / "resources" / "logo.png").is_file()
 
 
 # ---- design check --------------------------------------------------------------------------
@@ -562,4 +571,4 @@ def test_render_runs_the_check_first(ws, design):
     with pytest.raises(CheckFailed) as exc:
         render(ws, "d")
     assert exc.value.stage == "design check"
-    assert not ws.outputs_dir.exists()
+    assert not sites_dir(ws).exists()

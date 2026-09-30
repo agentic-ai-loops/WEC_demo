@@ -54,8 +54,11 @@ Rationale:
 - The tool result is the GraphQL response as JSON text (`{"data": ..., "errors": [...]}`).
   If the response has errors, the result is marked as an error; each error keeps its
   `extensions.code` (02-graphql-api, *Errors*).
-- Execution goes to the GraphQL server over HTTP (`GRAPHQL_HOST` / `GRAPHQL_PORT`); the
-  executor is injectable, so tests run the schema in-process.
+- The MCP server is served on `/mcp` by the single intelliw server (`svr start`,
+  `intelliw.server`), next to `/graphql` and `/health` on the same port.
+- The tools execute GraphQL in-process (`schema_executor`), against the same database
+  connections as `/graphql`; no HTTP hop. The executor is injectable, so tests supply
+  their own database.
 - The SDL is produced from the same code as the served API (`schema.as_str()`).
 
 ### Instructions
@@ -135,7 +138,8 @@ binding #design image slots, rendering a preview — not as wrappers around sing
 
 ## Implementation notes
 
-`src/intelliw/mcp/server.py` (`create_server`, `http_executor`, prompt registration),
+`src/intelliw/mcp/server.py` (`create_server`, `schema_executor`, prompt registration),
+`src/intelliw/server.py` (the app serving `/mcp`, `/graphql` and `/health`),
 `src/intelliw/mcp/prompts.py` (context, `render`, `PROMPTS`), templates in
 `src/intelliw/mcp/prompts/`, names in `src/intelliw/mcp/names.py`. Tests:
 `tests/test_mcp.py` (tools, in-process against the in-memory sample database) and

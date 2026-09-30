@@ -20,10 +20,12 @@ src/intelliw/
   config.py           Settings from environment / .env
   checks.py           Health checks used by `svr`
   workspace.py        Filesystem layout of one owner's workspace
-examples/whitby_eye_care/   Sample workspace: businessdata (run `make reimport`) + designs
+workspaces/
+  whitby_eye_care/    Sample workspace: businessdata (run `make reimport`) + designs
                       `clinic` (minimal site), `clinic-pro` (Bootstrap site) and
                       `inspector` (all data)
-examples/demo/        A minimal business.json document
+  demo/               A minimal business.json document
+  import_whitby_digest.py   builds whitby_eye_care's businessdata from digest.xml
 tests/                pytest suite
 ```
 
@@ -33,7 +35,7 @@ tests/                pytest suite
 uv sync                                   # install deps
 uv run pytest                             # run tests
 uv run ruff check . && uv run ruff format .
-uv run render --design clinic            # WORKSPACE from .env -> outputs/active/ (--dryrun: write nothing)
+uv run render --design clinic            # WORKSPACE from .env -> run/sites/<workspace>/clinic/ (--dryrun: write nothing)
 ```
 
 ## Claude Code plugin
@@ -47,13 +49,13 @@ a session with `claude --plugin-dir plugins/intelliw`.
 ## Make targets
 
 ```bash
-make mcp-start      # MCP server + GraphQL in the background (log in .run/mcp.log)
+make mcp-start      # the server (/mcp, /graphql, /health) in the background (log in run/svr.log)
 make mcp-stop       # stop it (also: make mcp-restart, make mcp-status)
-make reimport       # rebuild examples/whitby_eye_care from digest.xml (restarts a running server)
+make reimport       # rebuild workspaces/whitby_eye_care from digest.xml (restarts a running server)
 make claude         # start Claude Code connected to the MCP server
 ```
 
-Settings come from `.env`; override per call, e.g. `make mcp-start MCP_PORT=9102`.
+Settings come from `.env`; override per call, e.g. `make mcp-start SVR_PORT=8100`.
 `make claude` starts an owner agent isolated from this repository, so it can only learn
 about the business through MCP:
 
@@ -68,21 +70,52 @@ asks before each change. It uses Sonnet (`make claude CLAUDE_MODEL=opus` to chan
 Extra flags: `make claude CLAUDE_ARGS="..."`. Your user-level Claude Code settings and
 `~/.claude/CLAUDE.md` still apply.
 
-## Servers
+## Server
 
-Configuration comes from `.env` (copy `.env.example`): `GRAPHQL_HOST/PORT`, `MCP_HOST/PORT`,
-and `INTELLIW_RUN_DIR` (default `.run/`), where `svr` records the PID of each running server.
-Starting a server that is already running is refused.
+One server serves everything on one port:
+
+| Route | What |
+| --- | --- |
+| `/mcp` | the MCP server for owner agents (streamable HTTP) |
+| `/graphql` | the #businessdata GraphQL API |
+| `/health` | a JSON health report (status, database, workspace, version) |
+
+The MCP tools execute GraphQL in-process, against the same database as `/graphql`.
 
 ```bash
-uv run svr graphql                        # GraphQL at http://GRAPHQL_HOST:GRAPHQL_PORT/graphql
-uv run svr graphql --check
-uv run svr graphql --stop
-uv run svr mcp [--start-graphql]          # MCP (streamable HTTP) at http://MCP_HOST:MCP_PORT/mcp
-uv run svr mcp --check
-uv run svr mcp --stop                     # also stops a GraphQL started with --start-graphql
-uv run svr status                         # table of both servers, with PIDs
+uv run svr start [--host 0.0.0.0] [--port 8000] [--run-dir ./run]   # foreground; writes run/svr.pid
+uv run svr stop [--run-dir ./run]                                     # shut it down
+uv run svr status [--run-dir ./run]                                   # process, /health, /graphql, /mcp
 ```
+
+Defaults come from `.env` (copy `.env.example`): `SVR_HOST`, `SVR_PORT`, `INTELLIW_RUN_DIR`, and
+`WORKSPACE`, the workspace it serves. Starting a second server, or on a port another program
+uses, is refused. `start` also records its host and port in `run/svr.json`, so `status` finds
+the server without options.
+
+## Automatic re-rendering
+
+Every committed GraphQL mutation (from `/graphql` or MCP) queues a job on Redis (rq); the
+worker re-renders **every** design from the active version into
+`run/sites/<workspace>/<design>/`.
+
+```bash
+make redis-start                 # Redis in docker (container intelliw-redis, port 6379)
+make worker-start                # the worker in the background (log: run/worker.log)
+uv run jobs status               # worker, queue, and the last job's result per design
+uv run jobs enqueue              # queue a re-render by hand
+make dashboard-start             # rq-dashboard: queues, jobs, workers (http://127.0.0.1:9181)
+make worker-stop  /  make dashboard-stop  /  make redis-stop
+```
+
+rq-dashboard gets its own port: `DASHBOARD_HOST` / `DASHBOARD_PORT` (default
+`127.0.0.1:9181`), never `SVR_PORT`. It can delete and requeue jobs and has no login
+unless `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD` are set, so set them before binding
+it to a reachable address.
+
+`REDIS_URL` (default `redis://localhost:6379/0`) sets the queue. Without Redis, mutations
+still work; only the automatic re-render is skipped (and logged). `/health` shows the
+queue as `jobs`.
 
 ## Test client
 

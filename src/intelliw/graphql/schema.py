@@ -8,6 +8,7 @@ Domain errors become GraphQL errors with a machine-readable `extensions.code`.
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 import strawberry
@@ -22,6 +23,7 @@ from intelliw.businessdata.tables import ACTIVE
 from intelliw.graphql import inputs as i
 from intelliw.graphql import types as t
 from intelliw.graphql.context import Context, View
+from intelliw.jobs.models import MutationEvent
 
 ID = strawberry.ID
 
@@ -97,6 +99,8 @@ def _mutate[R](
             session.rollback()
             raise
     ctx.reset_loaders()
+    if ctx.publish is not None:
+        ctx.publish(MutationEvent(mutation=info.field_name, updated_at=datetime.now(UTC)))
     return result
 
 

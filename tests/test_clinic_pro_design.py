@@ -4,20 +4,21 @@ import shutil
 from pathlib import Path
 
 import pytest
+from conftest import sites_dir
 
 from intelliw.businessdata import mutations
 from intelliw.businessdata.database import create_db_engine, session_factory
 from intelliw.render import check_design, render
 from intelliw.workspace import Workspace
 
-DESIGN = Path(__file__).parent.parent / "examples" / "whitby_eye_care" / "design" / "clinic-pro"
+DESIGN = Path(__file__).parent.parent / "workspaces" / "whitby_eye_care" / "design" / "clinic-pro"
 ACTIONS = ("book-appointment", "call-clinic", "reorder-contact-lenses")
 
 
 @pytest.fixture
 def out(data_ws: Workspace) -> Path:
     shutil.copytree(DESIGN, data_ws.design("clinic-pro"))
-    return render(data_ws, "clinic-pro").output_dir
+    return render(data_ws, "clinic-pro", sites_dir=sites_dir(data_ws)).output_dir
 
 
 def pages(out: Path) -> dict[str, str]:
@@ -104,7 +105,7 @@ def test_no_escaped_markup_in_the_output(data_ws):
         s.commit()
     engine.dispose()
     shutil.copytree(DESIGN, data_ws.design("clinic-pro"))
-    out = render(data_ws, "clinic-pro").output_dir
+    out = render(data_ws, "clinic-pro", sites_dir=sites_dir(data_ws)).output_dir
     for name, html in pages(out).items():
         assert "&lt;" not in html, name
     booking = (out / "booking" / "index.html").read_text()
@@ -124,14 +125,13 @@ def test_light_and_dark_themes_with_a_toggle(out):
 
 
 def test_fonts_are_vendored_with_their_licences(out):
-    """Editorial display/heading/script/UI faces; body text stays highly readable."""
+    """Editorial display/heading/UI faces; body text stays highly readable."""
     css = (out / "assets" / "site.css").read_text()
     fonts = out / "assets" / "fonts"
     for family, files, licence in [
         ("Atkinson Hyperlegible", ["atkinson-hyperlegible-latin-400-normal"], "ATKINSON"),
-        ("Bodoni Moda", ["bodoni-moda-latin-opsz-normal"], "BODONI-MODA"),
+        ("Fraunces", ["fraunces-latin-opsz-normal"], "FRAUNCES"),
         ("Cormorant Garamond", ["cormorant-garamond-latin-600-normal"], "CORMORANT-GARAMOND"),
-        ("Allura", ["allura-latin-400-normal"], "ALLURA"),
         ("Jost", ["jost-latin-500-normal"], "JOST"),
     ]:
         assert f'font-family: "{family}"' in css, family

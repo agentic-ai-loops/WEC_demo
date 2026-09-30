@@ -31,11 +31,3 @@ class Workspace:
     def design(self, name: str) -> Path:
         """The folder of the design bundle `name` (docs/design/04-design.md)."""
         return self.design_dir / name
-
-    @property
-    def outputs_dir(self) -> Path:
-        return self.root / "outputs"
-
-    def output_dir(self, version_name: str) -> Path:
-        """Where a render of one #businessdata version goes: `outputs/<version_name>/`."""
-        return self.outputs_dir / version_name

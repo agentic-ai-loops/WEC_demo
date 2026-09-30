@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+from conftest import site, sites_dir
 from graphql import (
     FieldNode,
     FragmentDefinitionNode,
@@ -28,7 +29,7 @@ from intelliw.render import RenderOptions, check_design, render
 from intelliw.render.query import QueryRunner
 from intelliw.workspace import Workspace
 
-DESIGN = Path(__file__).parent.parent / "examples" / "whitby_eye_care" / "design" / "inspector"
+DESIGN = Path(__file__).parent.parent / "workspaces" / "whitby_eye_care" / "design" / "inspector"
 ENTITY_TYPES = {cls.__name__ for cls in t.TYPES.values()}
 # Query fields that are not #businessdata (or are covered by the list fields).
 NOT_DUMPED = {"hello"}
@@ -153,7 +154,7 @@ def ws(data_ws: Workspace) -> Workspace:
 
 
 def test_everything_is_rendered(ws):
-    result = render(ws, "inspector", RenderOptions(include_hidden=True))
+    result = render(ws, "inspector", RenderOptions(include_hidden=True), sites_dir=sites_dir(ws))
     out = result.output_dir
     html = (out / "index.html").read_text()
 
@@ -193,18 +194,18 @@ def test_everything_is_rendered(ws):
 
 
 def test_without_hidden_records_the_page_says_so(ws):
-    render(ws, "inspector")
-    html = (ws.output_dir("active") / "index.html").read_text()
+    render(ws, "inspector", sites_dir=sites_dir(ws))
+    html = (site(ws, "inspector") / "index.html").read_text()
     assert "Hidden records are left out" in html
     assert 'id="ContactPoint-appointments-email"' not in html
-    out = ws.output_dir("active")
+    out = site(ws, "inspector")
     assert not (out / "contacts" / "appointments-email").exists()  # no page for hidden
     assert (out / "contacts" / "main-phone" / "index.html").is_file()
 
 
 def test_entity_pages_link_to_related_entities_and_neighbours(ws):
-    render(ws, "inspector", RenderOptions(include_hidden=True))
-    page = (ws.output_dir("active") / "services" / "eye-exams" / "index.html").read_text()
+    render(ws, "inspector", RenderOptions(include_hidden=True), sites_dir=sites_dir(ws))
+    page = (site(ws, "inspector") / "services" / "eye-exams" / "index.html").read_text()
     assert 'href="../../service-categories/eye-exams/"' in page  # its category
     assert 'href="../../faqs/how-often-eye-exam/"' in page  # a related FAQ
     assert 'href="../dry-eye-testing/"' in page  # the next service
@@ -223,8 +224,8 @@ def _dump(ws: Workspace) -> dict:
 
 
 def test_entity_pages_show_the_assets_they_reference(ws):
-    render(ws, "inspector", RenderOptions(include_hidden=True))
-    out = ws.output_dir("active")
+    render(ws, "inspector", RenderOptions(include_hidden=True), sites_dir=sites_dir(ws))
+    out = site(ws, "inspector")
     staff = (out / "staff" / "dr-raniero-fernando" / "index.html").read_text()
     assert "referenced assets" in staff
     assert 'data-asset-field="photo"' in staff

@@ -713,5 +713,5 @@ Tests: `tests/test_businessdata_schema.py`, `tests/test_businessdata_db.py` (sam
 in `tests/businessdata_sample.py`).
 
 Snapshots and rollback are implemented (03-storage). Not yet implemented: a general
-`digest.xml` importer (a one-off script exists, `examples/import_whitby_digest.py`) and
+`digest.xml` importer (a one-off script exists, `workspaces/import_whitby_digest.py`) and
 mutations.

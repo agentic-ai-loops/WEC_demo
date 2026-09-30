@@ -12,12 +12,12 @@ outputs/
 
 # local config (see .env.example)
 .env
-# server PID files
+# server PID files and logs (svr start)
 .run/
+run/
 # workspace databases
 *.db
 
-# the Whitby example workspace is kept complete in the repo: its database and
-# rendered sites are included (other workspaces' databases and outputs stay ignored)
-!examples/whitby_eye_care/businessdata/business.db
-!examples/whitby_eye_care/outputs/
+# the Whitby example workspace keeps its database in the repo (other workspaces'
+# databases stay ignored); rendered sites go to $INTELLIW_RUN_DIR/sites/, ignored above
+!workspaces/whitby_eye_care/businessdata/business.db

@@ -12,6 +12,7 @@ from strawberry.dataloader import DataLoader
 from intelliw.businessdata import queries
 from intelliw.businessdata.schema import Entity
 from intelliw.businessdata.tables import ACTIVE
+from intelliw.jobs.models import MutationEvent
 
 
 class View(NamedTuple):
@@ -42,6 +43,9 @@ def _per_view[K: Hashable, V](
         return [results[k] for k in keys]
 
     return load
+
+
+Publisher = Callable[[MutationEvent], None]
 
 
 class Loaders:
@@ -91,6 +95,8 @@ class Context:
     resources_dir: Path | None = None
     # used by query fields whose version / snapshot / includeHidden arguments are omitted
     default_view: View = field(default_factory=View)
+    # called after every committed mutation (e.g. to queue a re-render); never raises
+    publish: "Publisher | None" = None
     _session: Session | None = field(default=None, repr=False)
     _loaders: Loaders | None = field(default=None, repr=False)
 

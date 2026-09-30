@@ -22,7 +22,7 @@ from intelliw.render.errors import (
     RenderFailure,
 )
 from intelliw.render.info import RenderInfo
-from intelliw.render.layout import list_designs, version_name
+from intelliw.render.layout import list_designs, site_dir, version_name
 from intelliw.render.renderer import RenderOptions, RenderResult, render, render_async
 
 __all__ = [
@@ -40,5 +40,6 @@ __all__ = [
     "list_designs",
     "render",
     "render_async",
+    "site_dir",
     "version_name",
 ]

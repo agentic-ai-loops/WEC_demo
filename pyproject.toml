@@ -13,7 +13,10 @@ dependencies = [
     "mcp>=2.2.0",
     "pydantic>=2.13.5",
     "python-dotenv>=1.2.3",
+    "redis>=8.1.0",
     "rich>=15.0.0",
+    "rq>=2.12.0",
+    "rq-dashboard>=0.9.0",
     "sqlalchemy>=2.1.0",
     "strawberry-graphql>=0.327.7",
     "typer>=0.27.2",
@@ -24,6 +27,7 @@ svr = "intelliw.cli.svr:app"
 client-cli = "intelliw.cli.client:app"
 business = "intelliw.cli.business:app"
 render = "intelliw.cli.render:app"
+jobs = "intelliw.cli.jobs:app"
 
 [build-system]
 requires = ["uv_build>=0.9.26,<0.10.0"]
@@ -31,6 +35,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "fakeredis>=2.38.0",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "ruff>=0.16.8",

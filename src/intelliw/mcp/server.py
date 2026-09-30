@@ -8,16 +8,16 @@ and the server instructions are rendered from templates (`intelliw.mcp.prompts`)
 
 import json
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import Any
 
-import httpx
-import uvicorn
 from graphql import GraphQLSyntaxError, OperationDefinitionNode, OperationType, parse
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import CallToolResult, TextContent, ToolAnnotations
+from sqlalchemy.orm import Session, sessionmaker
 
-from intelliw.config import Settings
+from intelliw.graphql.context import Context, Publisher
 from intelliw.graphql.schema import schema
 from intelliw.mcp import prompts
 from intelliw.mcp.names import SCHEMA_URI, TOOL_MUTATE, TOOL_QUERY, TOOL_SCHEMA
@@ -26,16 +26,24 @@ from intelliw.mcp.names import SCHEMA_URI, TOOL_MUTATE, TOOL_QUERY, TOOL_SCHEMA
 Executor = Callable[[str, dict[str, Any] | None], Awaitable[dict[str, Any]]]
 
 
-def http_executor(settings: Settings) -> Executor:
-    """Execute GraphQL by POSTing to the configured GraphQL server."""
+def schema_executor(
+    sessions: sessionmaker[Session] | None,
+    resources_dir: Path | None,
+    publish: Publisher | None = None,
+) -> Executor:
+    """Execute GraphQL in-process, against the same database as the `/graphql` route.
+
+    The result has the shape of an HTTP GraphQL response: `data`, and `errors` (with
+    their `extensions.code`) when there are any.
+    """
 
     async def execute(document: str, variables: dict[str, Any] | None) -> dict[str, Any]:
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(
-                settings.graphql_url, json={"query": document, "variables": variables}
-            )
-            resp.raise_for_status()
-            return resp.json()
+        context = Context(sessions, resources_dir, publish=publish)
+        result = await schema.execute(document, variable_values=variables, context_value=context)
+        response: dict[str, Any] = {"data": result.data}
+        if result.errors:
+            response["errors"] = [e.formatted for e in result.errors]
+        return response
 
     return execute
 
@@ -53,8 +61,8 @@ def schema_sdl() -> str:
     return schema.as_str()
 
 
-def create_server(settings: Settings, execute: Executor | None = None) -> MCPServer:
-    execute = execute or http_executor(settings)
+def create_server(execute: Executor) -> MCPServer:
+    """The MCP server; `execute` runs the GraphQL documents its tools receive."""
     server = MCPServer(name="intelliw", instructions=prompts.render("instructions"))
 
     async def run(document: str, variables: dict[str, Any] | None) -> CallToolResult:
@@ -156,9 +164,3 @@ def _register_prompts(server: MCPServer) -> None:
     @prompt("update_business")
     def update_business(request: str) -> str:
         return prompts.render("update_business", request=request)
-
-
-def uvicorn_server(settings: Settings) -> uvicorn.Server:
-    app = create_server(settings).streamable_http_app(host=settings.mcp_host)
-    config = uvicorn.Config(app, host=settings.mcp_host, port=settings.mcp_port, log_level="info")
-    return uvicorn.Server(config)

@@ -4,25 +4,14 @@ import pytest
 from mcp import Client
 
 from intelliw.businessdata.database import session_factory
-from intelliw.config import Settings
-from intelliw.graphql.context import Context
-from intelliw.graphql.schema import schema
 from intelliw.mcp import create_server
+from intelliw.mcp.server import schema_executor
 
 
 @pytest.fixture
 def server(engine, session):
     """The MCP server, executing GraphQL in-process against the sample database."""
-
-    async def execute(document: str, variables: dict | None) -> dict:
-        ctx = Context(session_factory(engine))
-        result = await schema.execute(document, variable_values=variables, context_value=ctx)
-        response: dict = {"data": result.data}
-        if result.errors:
-            response["errors"] = [e.formatted for e in result.errors]
-        return response
-
-    return create_server(Settings(), execute=execute)
+    return create_server(schema_executor(session_factory(engine), None))
 
 
 async def call(server, tool: str, **args):

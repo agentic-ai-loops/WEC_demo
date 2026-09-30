@@ -1,6 +1,7 @@
 """`render`: render a workspace's #businessdata with a design (docs/design/04-design.md)."""
 
 import logging
+from dataclasses import replace
 from pathlib import Path
 from typing import Annotated, NoReturn
 
@@ -22,7 +23,7 @@ from intelliw.workspace import Workspace
 
 app = typer.Typer(
     add_completion=False,
-    help="Render #businessdata with a design into <workspace>/outputs/<version_name>/.",
+    help="Render #businessdata with a design into {run_dir}/sites/{workspace}/{design}/.",
 )
 console = Console()
 err = Console(stderr=True)
@@ -49,11 +50,20 @@ def main(
     dryrun: Annotated[
         bool, typer.Option("--dryrun", help="Run every query and template; write nothing.")
     ] = False,
+    run_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "--run-dir", help="Sites go to {run_dir}/sites/ (default: INTELLIW_RUN_DIR or ./run)."
+        ),
+    ] = None,
 ) -> None:
     """Check the design, render every page, and write the site (unless --dryrun)."""
     if version is not None and snapshot is not None:
         _fail("Give either --version or --snapshot, not both.", 2)
-    root = Path(workspace) if workspace is not None else Settings.from_env().workspace
+    settings = Settings.from_env()
+    if run_dir is not None:
+        settings = replace(settings, run_dir=run_dir)
+    root = Path(workspace) if workspace is not None else settings.workspace
     if root is None:
         _fail("No workspace: set WORKSPACE in .env or pass the workspace directory.", 2)
     ws = Workspace(root.resolve())
@@ -64,7 +74,7 @@ def main(
 
     options = RenderOptions(version=version, snapshot=snapshot, include_hidden=include_hidden)
     try:
-        result = render(ws, design, options, dry_run=dryrun)
+        result = render(ws, design, options, sites_dir=settings.sites_dir, dry_run=dryrun)
     except DesignNotFound as exc:
         _fail(str(exc), 2)
     except queries.NotFound as exc:

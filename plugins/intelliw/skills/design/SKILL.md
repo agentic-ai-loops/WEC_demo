@@ -4,7 +4,7 @@ description: >-
   Generate an intelliw #design bundle (Jinja2 templates + GraphQL queries + static files)
   in a workspace from one or more design documents, then check and render it with
   `uv run render`. Use this whenever the user wants a new site design, template, theme,
-  page layout or static site for an intelliw workspace (e.g. `examples/whitby_eye_care`),
+  page layout or static site for an intelliw workspace (e.g. `workspaces/whitby_eye_care`),
   asks to turn a design brief / mock-up description / notes file into a design, or wants
   to add pages or routes to an existing design — even if they don't say "bundle".
 argument-hint: <workspace> <design-doc> [more design docs…]
@@ -15,7 +15,7 @@ argument-hint: <workspace> <design-doc> [more design docs…]
 Arguments: `$ARGUMENTS`
 
 - The **first** argument is the workspace: a directory path, or a name resolved as
-  `examples/<name>` in the intelliw repository (e.g. `whitby_eye_care`).
+  `workspaces/<name>` in the intelliw repository (e.g. `whitby_eye_care`).
 - **Every further** argument is a design document (Markdown, text, notes, a mock-up
   description…) to read in full. Together they say what the site should look like and
   contain.
@@ -66,7 +66,7 @@ from intelliw.graphql.context import Context, View
 from intelliw.graphql.schema import schema
 from intelliw.workspace import Workspace
 
-ws = Workspace(Path("examples/whitby_eye_care"))    # the workspace argument
+ws = Workspace(Path("workspaces/whitby_eye_care"))    # the workspace argument
 query = "{ services { id name summary image { __typename id path } } }"
 engine = create_db_engine(ws.database_file)
 ctx = Context(session_factory(engine), ws.resources_dir, default_view=View(0, False))
@@ -102,8 +102,8 @@ uv run render <workspace> --design <name> --dryrun --include-hidden
 `--dryrun` runs the design check, every query and every template, and the link check,
 without writing. Exit code 1 lists problems as `file:line: message`; fix them all and
 rerun. When clean, render for real (`uv run render <workspace> --design <name>`) — output
-goes to `<workspace>/outputs/active/` (snapshots: `--version N` / `--snapshot TAG` →
-`outputs/N[_tag]/`).
+goes to `{run_dir}/sites/{workspace}/{design}/` (run_dir: `INTELLIW_RUN_DIR` or `--run-dir`,
+default `./run`); `--version N` / `--snapshot TAG` render a snapshot into the same folder.
 
 ### 6. Look at it
 
@@ -111,8 +111,8 @@ Serve the output from a sub-folder (this proves relative links work) and view it
 browser tool if you have one, at desktop and phone widths if the documents care:
 
 ```bash
-uv run python -m http.server 8130 -d <workspace>/outputs    # then open /active/
-# or live reload while iterating:  uv run livereload <workspace>/outputs/active --port 8130
+uv run python -m http.server 8130 -d run/sites/<workspace>    # then open /<design>/
+# or live reload while iterating:  uv run livereload run/sites/<workspace>/<design> --port 8130
 ```
 
 Check that images load, links resolve, and nothing overflows horizontally. Stop any
@@ -343,12 +343,12 @@ reported by the render itself.
 
 ## Examples in the repository
 
-- `examples/whitby_eye_care/design/clinic/` — minimal public site: home, one page per
+- `workspaces/whitby_eye_care/design/clinic/` — minimal public site: home, one page per
   service, 404, stylesheet template, a script reading `render.json`.
-- `examples/whitby_eye_care/design/clinic-pro/` — a full public site (shared layout,
+- `workspaces/whitby_eye_care/design/clinic-pro/` — a full public site (shared layout,
   vendored front-end libraries, theme options in `_config.json`, contacts/actions
   selected by id in `site.gql`, a page per service and staff member).
-- `examples/whitby_eye_care/design/inspector/` — generic developer view: one page with
+- `workspaces/whitby_eye_care/design/inspector/` — generic developer view: one page with
   every field of every collection, an `[id]` route per collection, a site-wide entity
   index in `site.gql`, generic macros in `_partials/values.html.j2`.
 
